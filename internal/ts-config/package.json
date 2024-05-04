@@ -1,0 +1,25 @@
+{
+  "name": "@zfile/ts-config",
+  "version": "1.0.0",
+  "private": true,
+  "homepage": "https://github.com/zerotower69/zfile",
+  "bugs": {
+    "url": "https://github.com/zerotower69/zfile/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zerotower69/zfile.git",
+    "directory": "internal/ts-config"
+  },
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "base.json",
+    "nest-server.json",
+    "node.json",
+    "app.json"
+  ],
+  "dependencies": {
+    "@types/node": "^20.12.7"
+  }
+}

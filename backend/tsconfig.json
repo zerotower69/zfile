@@ -1,0 +1,3 @@
+{
+  "extends": "@zfile/ts-config/nest-server.json"
+}

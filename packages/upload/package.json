@@ -1,0 +1,33 @@
+{
+  "name": "@zfile/upload",
+  "version": "1.0.0",
+  "private": true,
+  "homepage": "https://github.com/zerotower69/zfile",
+  "bugs": {
+    "url": "https://github.com/zerotower69/zfile/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zerotower69/zfile.git",
+    "directory": "packages/upload"
+  },
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "pnpm rimraf .turbo node_modules dist",
+    "lint": "eslint \"src/**/*.ts\" --fix",
+    "stub": "pnpm unbuild --stub"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "lodash-es": "^4.17.21",
+    "spark-md5": "^3.0.2"
+  },
+  "devDependencies": {
+    "@types/lodash-es": "^4.17.12",
+    "@types/spark-md5": "^3.0.4"
+  }
+}

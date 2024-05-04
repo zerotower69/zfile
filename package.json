@@ -1,0 +1,58 @@
+{
+  "name": "big-upload",
+  "version": "1.0.0",
+  "description": "Big file upload and download.",
+  "keywords": [
+    "big-file",
+    "upload",
+    "download",
+    "task queue"
+  ],
+  "author": "zerotower<zerotower@163.com>",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "postinstall": "turbo run stub",
+    "changeset": "changeset",
+    "version": "pnpm run changeset version",
+    "prepare": "husky install",
+    "commit": "czg",
+    "clean": "turbo run clean && rimraf node_modules",
+    "lint": "turbo run lint"
+  },
+  "lint-staged": {
+  },
+  "dependencies": {
+    "@zfile/ts-config": "workspace:^1.0.0",
+    "@zfile/upload": "workspace:*",
+    "@zfile/vue-bigupload": "workspace:*",
+    "@zfile/eslint-config": "workspace:*"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.1",
+    "@commitlint/cli": "^19.2.2",
+    "@commitlint/config-conventional": "^19.2.2",
+    "@types/node": "^20.12.8",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "editorconfig": "^2.0.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^15.2.2",
+    "only-allow": "^1.2.1",
+    "rimraf": "^5.0.5",
+    "turbo": "^1.13.2",
+    "unbuild": "^2.0.0",
+    "cz-git": "^1.9.1",
+    "czg": "^1.9.1"
+  },
+  "license": "MIT",
+  "packageManager": "pnpm@8.10.0",
+  "engines": {
+    "node": ">=18.12.0",
+    "pnpm": ">=8.10.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "node_modules/cz-git"
+    }
+  }
+}

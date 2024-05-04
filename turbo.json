@@ -1,0 +1,14 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "pipeline": {
+    "clean": {
+      "dependsOn": ["^clean"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "stub": {}
+  },
+  "globalDependencies": [
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "extends": ["@zfile/ts-config/node.json"],
+  "compilerOptions": {
+    "noEmit": true
+  }
+}
