@@ -4,3 +4,4 @@
 **/dist
 **/uploads
 **/.turbo
+docs/.vitepress/cache
