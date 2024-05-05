@@ -285,3 +285,25 @@ export interface UploadActions {
 
 //接口并发数 1-6
 export type RequestLimit = 1 | 2 | 3 | 4 | 5 | 6;
+
+/**
+ * worker配置
+ */
+export interface WorkerConfig {
+    /**
+     *允许最大线程数，开发时，可通过navigator.hardwareConcurrency查看机器上允许的最大线程数
+     */
+    thread?: number;
+    /**
+     * 文件切片并发，允许多少个文件同时切片
+     */
+    parallel?: number;
+    /**
+     * 切片响应超时，如果超过指定时间为完成切片，将终止所有相关的worker线程，切片失败。默认：5*60*1000
+     */
+    timeout?: number;
+    /**
+     * 指定worker中 spark-md5 引用的资源路径
+     */
+    spark_md5_url?: string;
+}

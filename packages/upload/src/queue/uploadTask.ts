@@ -6,6 +6,7 @@ import {
     UploadChunk,
     UploadFile,
     UploadStatus,
+    WorkerConfig,
 } from "../interface";
 import { UploadQueue } from "./uploadQueue.ts";
 import {
@@ -30,7 +31,7 @@ export interface UploadTaskOptions {
         oldStatus?: UploadStatus,
     ) => void;
     maxRetries?: number;
-    thread?: number;
+    worker?: WorkerConfig;
 }
 
 /**
@@ -63,19 +64,22 @@ export class UploadTask {
             file,
             status,
             maxRetries = 3,
-            thread = 4,
         } = options;
         this._options = {
             ...options,
             status,
             maxRetries,
-            thread,
         };
         this.id = taskId++;
         this.uploadQueue = uploadQueue;
         this.file = file;
         this._status = status;
-        this.sliceContext = useSliceFile(file, thread);
+        this.sliceContext = useSliceFile(
+            file,
+            this.options?.worker?.thread ?? 4,
+            this.options?.worker?.timeout,
+            this.options?.worker?.spark_md5_url,
+        );
         this._running = false;
         this._uploadedSize = 0;
         this._uploadedChunks = [];

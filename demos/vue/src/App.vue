@@ -46,6 +46,9 @@ const { upload } = useFileUpload({
   onProgress(progress, file, context) {
     console.log(file?.name, progress);
   },
+  worker: {
+    spark_md5_url: new URL("lib/spark-md5.min.js", window.location.href).href,
+  },
 });
 
 onMounted(() => {

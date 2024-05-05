@@ -10,6 +10,7 @@ import {
     UploadFile,
     UploadRawFile,
     UploadStatus,
+    WorkerConfig,
 } from "../interface";
 import {
     RequestTask,
@@ -52,9 +53,9 @@ export interface UploadQueueOptions {
      */
     maxRetries?: number;
     /**
-     * 切片worker线程数,默认4
+     * worker线程配置
      */
-    thread?: number;
+    worker?: WorkerConfig;
     //TODO：文件上传总大小，速率、剩余耗时等
     /**
      * 进度回调
@@ -86,7 +87,7 @@ export class UploadQueue {
             maxRetries = 3,
             headers,
             requestLimit = 6,
-            thread = 4,
+            worker = {},
         } = options;
         this._options = {
             ...options,
@@ -96,7 +97,7 @@ export class UploadQueue {
             timeout,
             maxRetries,
             requestLimit,
-            thread,
+            worker,
         };
         this.actions = actions;
         this.fileQueue = [];
@@ -153,7 +154,7 @@ export class UploadQueue {
             file: uploadFile,
             uploadQueue: this,
             status: UploadStatus.WAITING,
-            thread: this.options.thread,
+            worker: this.options.worker,
         });
         //添加到任务队列
         this.taskQueue.push(uploadTask);

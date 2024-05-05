@@ -14,8 +14,14 @@ interface SliceReturn {
 
 /**
  * 在web worker里完成每个chunk的切片
+ * @param timeout 切片超时，默认 5min(5*60*1000ms)
+ * @param SPARK_MD5_URL spark-md5 路径，可以为CDN,也可以是本地静态资源路径
  */
-export function sliceFile() {
+export function sliceFile(
+    timeout = 5 * 60 * 1000,
+    SPARK_MD5_URL = "https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/spark-md5/3.0.2/spark-md5.min.js",
+) {
+    console.log(SPARK_MD5_URL);
     return useWebWorkerFn<
         (data: {
             fileUid: number;
@@ -114,12 +120,8 @@ export function sliceFile() {
             });
         },
         {
-            //TODO:抽取worker超时，
-            timeout: 5 * 60 * 1000,
-            //TODO:抽取spark-md5CDN配置
-            dependencies: [
-                "https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/spark-md5/3.0.2/spark-md5.min.js",
-            ],
+            timeout: timeout,
+            dependencies: [SPARK_MD5_URL],
         },
     );
 }
@@ -244,6 +246,8 @@ export interface UseSliceFileReturn {
 export function useSliceFile(
     file: UploadFile,
     thread = 1,
+    timeout = 5 * 60 * 1000,
+    url?: string,
 ): UseSliceFileReturn {
     thread = Math.min(
         Math.max(thread, 1),
@@ -264,8 +268,10 @@ export function useSliceFile(
 
     async function start(): Promise<SliceReturn> {
         for (let i = 1; i <= thread; i++) {
-            const { workerFn, workerTerminate } =
-                sliceFile();
+            const { workerFn, workerTerminate } = sliceFile(
+                timeout,
+                url,
+            );
             workerTerminate();
             clearFns.push(workerTerminate);
             const start = chunkCount + 1,
@@ -318,3 +324,5 @@ export function useSliceFile(
         stop,
     };
 }
+
+//TODO:如果不支持worker的情况下，就要兼容在主线程里分片和计算hash，这时为了防止UI卡顿，可以选择使用requestIdleCallback来完成切片
