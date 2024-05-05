@@ -178,6 +178,7 @@ export class AppController {
           const p = fs.promises.rm(`uploads/chunks/${chunkModelList[i].chunk_hash}`);
           removePs.push(p);
         }
+        // @ts-ignore
         await Promise.allSettled(removePs);
         //还要去删除chunk-list中的记录
         const effect = await this.chunkModel.destroy({

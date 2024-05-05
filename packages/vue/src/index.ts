@@ -1,1 +1,1 @@
-export * from "./useBigUpload"
+export * from "./useBigUpload";

@@ -8,7 +8,7 @@ interface TaskContext<T = any> {
 /**
  * 异步任务队列控制并发
  */
-export class SuperTask {
+export class TaskQueue {
     private queue: TaskContext[];
     private parallelCount: number;
     private runningCount: number;
@@ -43,18 +43,14 @@ export class SuperTask {
         this.isCancel = true;
     }
 
-    /**
-     * 更新并发控制数
-     * @param parallel
-     */
-    updateParallel(parallel: number) {
-        //浏览器（http1）最大允许6个请求
-        this.parallelCount = Math.min(6, parallel);
-    }
-
     private _run() {
-        while (this.runningCount <= this.parallelCount && this.queue.length && !this.isCancel) {
-            const { task, resolve, reject } = this.queue.shift() as TaskContext;
+        while (
+            this.runningCount <= this.parallelCount &&
+            this.queue.length &&
+            !this.isCancel
+        ) {
+            const { task, resolve, reject } =
+                this.queue.shift() as TaskContext;
             this.runningCount++;
             Promise.resolve(task())
                 .then(resolve, reject)

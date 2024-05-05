@@ -82,6 +82,7 @@ export class FileTask {
         }
         this.options?.onChangeStatus?.(this.file, status, this.status);
         this.file.status = status;
+        // eslint-disable-next-line no-empty
         switch (
             status
             //TODO:干点别的什么
@@ -96,7 +97,7 @@ export class FileTask {
      * 发送请求
      * @param config
      */
-    request<T extends any = any>(config: AxiosRequestConfig) {
+    request<T = any>(config: AxiosRequestConfig) {
         config.cancelToken = this.source.token;
         const that = this;
         return function () {
@@ -181,7 +182,9 @@ export class FileTask {
         if (this._running) {
             try {
                 this.startUpload();
-            } catch (e) {}
+            } catch (e) {
+                /* empty */
+            }
         } else {
             this._runResolve?.("任务暂停");
         }
@@ -193,7 +196,6 @@ export class FileTask {
             console.log("准备切片", this.status);
             if (this.status === FileStatus.WAITING) {
                 this.status = FileStatus.READING;
-                console.log(this.sliceContext);
                 return this.sliceContext
                     ?.start?.()
                     .then((data) => {

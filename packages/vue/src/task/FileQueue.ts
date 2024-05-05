@@ -1,8 +1,8 @@
-import { FileStatus, UploadFile, UploadRawFile } from "../interface.ts";
-import { UploadActions } from "../request/interface.ts";
-import { genFileId } from "../helpers.ts";
+import { FileStatus, UploadFile, UploadRawFile } from "../interface";
+import { UploadActions } from "../request/interface";
+import { genFileId } from "../helpers";
 import { isArray } from "lodash-es";
-import { FileTaskQueue } from "./FileTaskQueue.ts";
+import { FileTaskQueue } from "./FileTaskQueue";
 import { AxiosHeaders } from "axios";
 
 export interface FileQueueOption {

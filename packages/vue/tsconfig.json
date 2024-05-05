@@ -1,6 +1,10 @@
 {
   "extends": ["@zfile/ts-config/node.json"],
   "compilerOptions": {
-    "noEmit": true
-  }
+    "noEmit": true,
+    "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": true,
+    "emitDeclarationOnly": true
+  },
+  "include": ["src"]
 }

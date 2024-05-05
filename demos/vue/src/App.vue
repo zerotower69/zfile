@@ -1,62 +1,65 @@
 <script setup lang="ts">
-import {onMounted, ref} from "vue"
-import {useBigUpload} from "@zfile/vue-bigupload"
-const uploadRef=ref<HTMLInputElement>();
+import { onMounted, ref } from "vue";
+import { useFileUpload } from "@zfile/upload";
+const uploadRef = ref<HTMLInputElement>();
 
-const {upload} =useBigUpload({
-  multiple:true,
-  accept:"",
-  actions:{
-    upload:{
-      action:"http://localhost:3000/upload",
-      method:'post',
+const { upload } = useFileUpload({
+  actions: {
+    upload: {
+      action: "http://localhost:3000/upload",
+      method: "post",
       transformData(chunk, file) {
-          const formData = new FormData();
-          formData.append('total',`${file?.total}`);
-          formData.append('chunkNumber',`${chunk?.index}`);
-          formData.append('chunkSize',`${chunk?.size}`);
-          formData.append('chunkHash',`${chunk?.hash}`);
-          formData.append('fileName',`${file?.name}`);
-          formData.append('fileSize',`${file?.size}`);
-          formData.append('fileHash',`${file?.hash}`)
-        return formData
+        const formData = new FormData();
+        formData.append("total", `${file?.total}`);
+        formData.append("chunkNumber", `${chunk?.index}`);
+        formData.append("chunkSize", `${chunk?.size}`);
+        formData.append("chunkHash", `${chunk?.hash}`);
+        formData.append("fileName", `${file?.name}`);
+        formData.append("fileSize", `${file?.size}`);
+        formData.append("fileHash", `${file?.hash}`);
+        return formData;
       },
-      timeout:99999
+      timeout: 99999,
     },
-    check:{
-      action:"http://localhost:3000/check",
-      method:'post',
+    check: {
+      action: "http://localhost:3000/check",
+      method: "post",
       transformData(file) {
-          return {
-            fileHash:file.hash
-          }
+        return {
+          fileHash: file.hash,
+        };
       },
     },
-    merge:{
-      action:"http://localhost:3000/merge",
-      method:'post',
-      timeout:60*1000,
+    merge: {
+      action: "http://localhost:3000/merge",
+      method: "post",
+      timeout: 60 * 1000,
       transformData(file) {
-          return{
-            total:file.total,
-            md5:file.hash,
-            fileName:file.name
-          }
+        return {
+          total: file.total,
+          md5: file.hash,
+          fileName: file.name,
+        };
       },
-    }
-  }
+    },
+  },
+  onProgress(progress, file, context) {
+    console.log(file?.name, progress);
+  },
 });
 
-onMounted(()=>{
-  uploadRef.value!.onchange=function (ev:Event){
+onMounted(() => {
+  uploadRef.value!.onchange = function (ev: Event) {
     const fileList = (ev.target as HTMLInputElement).files!;
-    if(fileList.length){
-      upload(...fileList)
+    if (fileList.length) {
+      [...fileList].forEach((file) => {
+        upload(file).then(() => {
+          console.log("上传成功");
+        });
+      });
     }
-  }
-})
-
-
+  };
+});
 </script>
 
 <template>

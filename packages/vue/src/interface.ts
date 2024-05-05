@@ -1,49 +1,49 @@
-import {AxiosHeaders, AxiosProgressEvent} from "axios";
-import {UploadActions} from "./request/interface.ts";
+import { AxiosHeaders, AxiosProgressEvent } from "axios";
+import { UploadActions } from "./request/interface";
 
 export interface UploadFile {
-   name:string;
-   status:FileStatus,
-   size:number;
-   uid:number;
-   raw:UploadRawFile;
-   chunkSize:number;
-   total:number;
-   hash?:string;
-   percentage?:number;
-   chunks?:UploadChunk[]
+    name: string;
+    status: FileStatus;
+    size: number;
+    uid: number;
+    raw: UploadRawFile;
+    chunkSize: number;
+    total: number;
+    hash?: string;
+    percentage?: number;
+    chunks?: UploadChunk[];
 }
 
 export interface UploadChunk {
-    filename:string;
-    raw:Blob;
-    uid:number;
-    size:number;
-    index:number;
-    originFile?:UploadFile
-    status?:FileStatus;
-    percentage?:number;
-    hash?:string;
+    filename: string;
+    raw: Blob;
+    uid: number;
+    size: number;
+    index: number;
+    originFile?: UploadFile;
+    status?: FileStatus;
+    percentage?: number;
+    hash?: string;
 }
 export interface UploadRawFile extends File {
-    uid:number;
+    uid: number;
 }
 
 export enum FileStatus {
-    WAITING ="waiting",
+    WAITING = "waiting",
     READING = "reading",
-    READY ="ready",
+    READY = "ready",
     UPLOADING = "uploading",
-    PENDING ="pending",
+    PENDING = "pending",
     SUCCESS = "success",
-    FAIL = "fail"
+    FAIL = "fail",
 }
 
 export interface UseUploadOptions {
     /**
      * TODO:允许上传多个文件
      */
-    multiple?:boolean;
+    multiple?: boolean;
     /**
      * 限制上传个数
      */
@@ -55,63 +55,63 @@ export interface UseUploadOptions {
     /**
      * 接受的文件类型，和原生input[type="file"]的 accept属性一致
      */
-    accept?:string;
+    accept?: string;
     /**
      * 文件的切片大小，小于该大小的文件不被切片，且
      */
-    chunkSize?:number
-    actions:UploadActions
-    headers?: AxiosHeaders
+    chunkSize?: number;
+    actions: UploadActions;
+    headers?: AxiosHeaders;
     withCredentials?: boolean;
     /**
      *
      */
-    parallel?:1|2|3,
-    onProgress?:(file:UploadFile,percentage:number)=>void
-    onFileChange?:(files?:File[],fileQueue?:UploadFile[])=>void
+    parallel?: 1 | 2 | 3;
+    onProgress?: (file: UploadFile, percentage: number) => void;
+    onFileChange?: (files?: File[], fileQueue?: UploadFile[]) => void;
 }
 
 export interface UserUploadReturn {
-    upload:(limit:number)=>void
+    upload: (limit: number) => void;
 }
 
 export interface UploadProgressEvent extends ProgressEvent {
-    percent: number
+    percent: number;
 }
 
 export interface NormalAjaxOptions {
-    type:"normal",
-    url: string
-    method: string
-    data: Record<string, string | Blob | [string | Blob, string]>
-    headers: Headers | Record<string, string | number | null | undefined>
-    onError: (evt: BigFileRequestError) => void
-    onProgress?: (evt: UploadProgressEvent) => void
-    onSuccess: (response: any) => void
-    withCredentials: boolean
+    type: "normal";
+    url: string;
+    method: string;
+    data: Record<string, string | Blob | [string | Blob, string]>;
+    headers: Headers | Record<string, string | number | null | undefined>;
+    onError: (evt: BigFileRequestError) => void;
+    onProgress?: (evt: UploadProgressEvent) => void;
+    onSuccess: (response: any) => void;
+    withCredentials: boolean;
 }
 
 export interface UploadOptions {
-    url: string
-    method: string
-    headers: AxiosHeaders
-    onError?: (evt: BigFileRequestError) => void
-    onProgress?: (evt: AxiosProgressEvent) => void
-    onSuccess?: (response: any) => void
-    withCredentials: boolean
+    url: string;
+    method: string;
+    headers: AxiosHeaders;
+    onError?: (evt: BigFileRequestError) => void;
+    onProgress?: (evt: AxiosProgressEvent) => void;
+    onSuccess?: (response: any) => void;
+    withCredentials: boolean;
 }
 
 export interface StartUploadOptions {
-    data:Record<string, any>,
-    fileField:string
-    chunk:Blob;
-    onProgress?:(evt:AxiosProgressEvent)=>void;
+    data: Record<string, any>;
+    fileField: string;
+    chunk: Blob;
+    onProgress?: (evt: AxiosProgressEvent) => void;
 }
 
 export class BigFileRequestError extends Error {
-    name = 'BigFileRequestError'
+    name = "BigFileRequestError";
 
     constructor(message: string) {
-        super(message)
+        super(message);
     }
 }
