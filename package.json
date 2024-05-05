@@ -17,7 +17,8 @@
     "prepare": "husky install",
     "commit": "czg",
     "clean": "turbo run clean && rimraf node_modules",
-    "lint": "turbo run lint"
+    "lint": "turbo run lint",
+    "build:docs": "pnpm -C docs docs:build"
   },
   "lint-staged": {
   },
