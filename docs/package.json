@@ -7,9 +7,7 @@
     "docs:build": "vitepress build",
     "docs:preview": "vitepress preview"
   },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
+  "author": "zerotower",
   "devDependencies": {
     "vitepress": "^1.1.4",
     "vue": "^3.4.21"
