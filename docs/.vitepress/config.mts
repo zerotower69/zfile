@@ -2,13 +2,15 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "zfile document",
-  description: "the document of zfile",
+  title: "zfile-大文件上传和下载",
+  description: "一站式开箱大文件上传和下载，不依赖任何前端框架",
+  metaChunk:true,
+  base:"/zfile/",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Examples', link: '/markdown-examples' }
+      { text: '主页', link: '/' },
+      { text: '在线示例', link: '/markdown-examples' }
     ],
 
     sidebar: [
@@ -22,10 +24,13 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
+      { icon: 'github', link: 'https://github.com/zerotower69/zfile' }
     ]
   },
+  outDir:"./dist",
   vite:{
-    base:"/zfile/"
+    server:{
+      port:8000
+    }
   }
 })
