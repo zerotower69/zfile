@@ -38,12 +38,12 @@ jobs:
       - name: Use Node  📦              # 步骤名
         uses: actions/setup-node@v3 # 使用插件 => https://github.com/actions/setup-node
         with: # 插件携带参数
-          node-version: 16 # 指定 node 版本
+          node-version: 18.12.0 # 指定 node 版本
       # step 3. 安装pnpm
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: '8.6.7'
+          version: '8.10.0'
       # step 4. 安装依赖并打包
       - name: Install dependencies
         run: pnpm install
