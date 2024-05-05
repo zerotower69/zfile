@@ -1,7 +1,6 @@
 {
   "name": "@zfile/upload",
   "version": "1.0.0",
-  "private": true,
   "homepage": "https://github.com/zerotower69/zfile",
   "bugs": {
     "url": "https://github.com/zerotower69/zfile/issues"
@@ -13,10 +12,19 @@
   },
   "license": "MIT",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
-  "main": "src/index.ts",
   "scripts": {
     "clean": "pnpm rimraf .turbo node_modules dist",
     "lint": "eslint \"src/**/*.ts\" --fix",
