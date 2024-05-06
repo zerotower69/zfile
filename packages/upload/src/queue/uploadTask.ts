@@ -1,6 +1,5 @@
 import { debounce } from "lodash-es";
 import humanFormat from "human-format";
-import dayjs from "dayjs";
 import {
     ProgressContext,
     UploadChunk,
@@ -8,16 +7,13 @@ import {
     UploadStatus,
     WorkerConfig,
 } from "../interface";
-import { UploadQueue } from "./uploadQueue.ts";
+import { UploadQueue } from "./uploadQueue";
 import {
     getCheckChunkApi,
     getMergeChunkApi,
     getUploadChunkApi,
-} from "../api.ts";
-import {
-    useSliceFile,
-    UseSliceFileReturn,
-} from "../slice.ts";
+} from "../api";
+import { useSliceFile, UseSliceFileReturn } from "../slice";
 import { getError, transformError } from "../utils";
 
 let taskId = 1;
@@ -163,7 +159,7 @@ export class UploadTask {
                     );
                     return this._runP;
                 }
-                this._uploadTime = Date.now();
+                this._uploadTime = performance.now();
                 //检查文件上传完成没有
                 const check = await this.checkChunkApi(
                     this.file,
@@ -396,7 +392,7 @@ export class UploadTask {
         this.status = UploadStatus.UPLOADING;
         let currentIndex = 0;
         const tasks = [];
-        this.uploadTime = Date.now();
+        this.uploadTime = performance.now();
         while (currentIndex < chunks.length) {
             const chunk = chunks[currentIndex];
             const task = this.uploadChunkApi(
@@ -426,18 +422,21 @@ function updateFileProgress(
         task.file.size,
         task.uploadedSize,
     );
-    //剩余上传
+    //剩余上传大小
     const left = task.file.size - count;
-    const time = Date.now();
+    const time = performance.now();
     //时间刻度
-    const rangeTime = dayjs(time).diff(task.uploadTime);
+    const rangeTime = time - task.uploadTime;
+    //由于每次调用在chunk上传成功后，因此这段时间的上传大小就是上传的这个chunk的大小
     const rangeSize = chunk.size;
     task.uploadedSize = count;
+    //计算出的速率是 x byte/s
     const rate = rangeSize
         ? Math.round((1000 * rangeSize) / rangeTime)
         : 0;
+    //处理成可读的模式
     const rateText = humanFormat.bytes(rate);
-    task.uploadTime = time;
+    //百分比计算
     const percentage =
         Math.round((count / task.file.size) * 100) / 100;
     task.file.percentage = percentage;

@@ -2,14 +2,19 @@ import {
     UploadChunk,
     UploadFile,
     UploadRawFile,
-} from "./interface";
+} from "../interface";
 import SparkMD5 from "spark-md5";
-import { getConcurrency } from "./utils";
-import { useWebWorkerFn, WebWorkerStatus } from "./worker";
+import { getConcurrency } from "../utils";
+import { useWebWorkerFn, WebWorkerStatus } from "../worker";
 
 interface SliceReturn {
     fileHash: string;
     fileChunks: UploadChunk[];
+}
+
+export interface UseSliceFileReturn {
+    start: () => Promise<SliceReturn>;
+    stop: () => void;
 }
 
 /**
@@ -21,7 +26,6 @@ export function sliceFile(
     timeout = 5 * 60 * 1000,
     SPARK_MD5_URL = "https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/spark-md5/3.0.2/spark-md5.min.js",
 ) {
-    console.log(SPARK_MD5_URL);
     return useWebWorkerFn<
         (data: {
             fileUid: number;
@@ -238,11 +242,6 @@ export function multipleSliceFile(
     };
 }
 
-export interface UseSliceFileReturn {
-    start: () => Promise<SliceReturn>;
-    stop: () => void;
-}
-
 export function useSliceFile(
     file: UploadFile,
     thread = 1,
@@ -324,5 +323,3 @@ export function useSliceFile(
         stop,
     };
 }
-
-//TODO:如果不支持worker的情况下，就要兼容在主线程里分片和计算hash，这时为了防止UI卡顿，可以选择使用requestIdleCallback来完成切片
