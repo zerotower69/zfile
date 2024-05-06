@@ -56,7 +56,6 @@ export interface UploadQueueOptions {
      * worker线程配置
      */
     worker?: WorkerConfig;
-    //TODO：文件上传总大小，速率、剩余耗时等
     /**
      * 进度回调
      * @param file 上传文件

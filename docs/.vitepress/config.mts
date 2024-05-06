@@ -6,14 +6,14 @@ export default defineConfig({
   description: "一站式开箱大文件上传和下载，不依赖任何前端框架",
   metaChunk:true,
   base:"/zfile/",
-  themeConfig: {
+  themeConfig:
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: '主页', link: '/' },
       { text: '在线示例', link: '/markdown-examples' }
     ],
 
-    sidebar: [
+    sidebar:[
       {
         text: 'Examples',
         items: [
