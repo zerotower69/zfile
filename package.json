@@ -25,7 +25,6 @@
   "dependencies": {
     "@zfile/ts-config": "workspace:^1.0.0",
     "@zfile/upload": "workspace:*",
-    "@zfile/vue-bigupload": "workspace:*",
     "@zfile/eslint-config": "workspace:*"
   },
   "devDependencies": {

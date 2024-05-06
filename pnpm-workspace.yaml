@@ -1,6 +1,7 @@
 packages:
   - "internal/*"
   - "packages/*"
+  - "components/*"
   - "demos/*"
   - "backend"
   - "docs"

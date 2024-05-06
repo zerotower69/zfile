@@ -16,9 +16,9 @@ hero:
 
 features:
   - title: 无框架依赖🍎
-    details: 纯粹的JavaScript逻辑核心实现，不和任务前端框架耦合。
+    details: 纯粹的JavaScript逻辑核心实现，不和任何前端框架耦合
   - title: 请求优化😊
-    details: 大文件上传和下载请求时限制最大并发数，请求失败时再次重试。
+    details: 大文件上传和下载请求时限制最大并发数，请求失败时再次重试
   - title: 任务调度🔥
     details: 可以随时暂停、恢复、取消大文件的上传和下载
   - title: 多线程 🚀
