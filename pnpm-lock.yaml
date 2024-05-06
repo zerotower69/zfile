@@ -17,9 +17,6 @@ importers:
       '@zfile/upload':
         specifier: workspace:*
         version: link:packages/upload
-      '@zfile/vue-bigupload':
-        specifier: workspace:*
-        version: link:packages/vue
     devDependencies:
       '@changesets/cli':
         specifier: ^2.27.1
@@ -267,43 +264,6 @@ importers:
       '@types/spark-md5':
         specifier: ^3.0.4
         version: 3.0.4
-
-  packages/vue:
-    dependencies:
-      '@vueuse/core':
-        specifier: ^10.9.0
-        version: 10.9.0(vue@3.4.26)
-      '@vueuse/shared':
-        specifier: ^10.9.0
-        version: 10.9.0(vue@3.4.26)
-      axios:
-        specifier: ^1.6.8
-        version: 1.6.8
-      lodash-es:
-        specifier: ^4.17.21
-        version: 4.17.21
-      spark-md5:
-        specifier: ^3.0.2
-        version: 3.0.2
-    devDependencies:
-      '@types/lodash-es':
-        specifier: ^4.17.12
-        version: 4.17.12
-      '@types/node':
-        specifier: ^20.11.8
-        version: 20.12.7
-      '@types/spark-md5':
-        specifier: ^3.0.4
-        version: 3.0.4
-      '@vue/shared':
-        specifier: ^3.4.26
-        version: 3.4.26
-      typescript:
-        specifier: ^5.4.5
-        version: 5.4.5
-      vue:
-        specifier: ^3.4.21
-        version: 3.4.26(typescript@5.4.5)
 
 packages:
 
@@ -2941,6 +2901,7 @@ packages:
     resolution: {integrity: sha512-wq0cICSkRLVaf3UGLMGItu/PtdY7oaXaI/RVU+xliKVOtRna3PRY57ZDfztpDL0n11vfymMUnXv8QwYCO7L1wg==}
     dependencies:
       undici-types: 5.26.5
+    dev: false
 
   /@types/node@20.12.8:
     resolution: {integrity: sha512-NU0rJLJnshZWdE/097cdCBbyW1h4hEg0xpovcoAQYHl8dnEyp/NAOiE45pvc+Bd1Dt+2r94v2eGFpQJ4R7g+2w==}
@@ -3014,6 +2975,7 @@ packages:
 
   /@types/web-bluetooth@0.0.20:
     resolution: {integrity: sha512-g9gZnnXVq7gM7v3tJCWV/qw7w+KeOlSHAhgF9RytFyifW6AF61hdT2ucrYhPq9hLs5JIryeupHV3qGk95dH9ow==}
+    dev: true
 
   /@types/yargs-parser@21.0.3:
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -3574,6 +3536,7 @@ packages:
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
+    dev: true
 
   /@vueuse/integrations@10.9.0(focus-trap@7.5.4)(vue@3.4.26):
     resolution: {integrity: sha512-acK+A01AYdWSvL4BZmCoJAcyHJ6EqhmkQEXbQLwev1MY7NBnS+hcEMx/BzVoR9zKI+UqEPMD9u6PsyAuiTRT4Q==}
@@ -3627,6 +3590,7 @@ packages:
 
   /@vueuse/metadata@10.9.0:
     resolution: {integrity: sha512-iddNbg3yZM0X7qFY2sAotomgdHK7YJ6sKUvQqbvwnf7TmaVPxS4EJydcNsVejNdS8iWCtDk+fYXr7E32nyTnGA==}
+    dev: true
 
   /@vueuse/shared@10.9.0(vue@3.4.26):
     resolution: {integrity: sha512-Uud2IWncmAfJvRaFYzv5OHDli+FbOzxiVEQdLCKQKLyhz94PIyFC3CHcH7EDMwIn8NPtD06+PNbC/PiO0LGLtw==}
@@ -3635,6 +3599,7 @@ packages:
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
+    dev: true
 
   /@webassemblyjs/ast@1.12.1:
     resolution: {integrity: sha512-EKfMUOPRRUTy5UII4qJDGPpqfwjOmZ5jeGFwid9mnoqIFK+e0vqoi1qH56JpmZSzEL53jKnNzScdmftJyG5xWg==}
@@ -10927,6 +10892,7 @@ packages:
         optional: true
     dependencies:
       vue: 3.4.26(typescript@5.4.5)
+    dev: true
 
   /vue-eslint-parser@9.4.2(eslint@8.57.0):
     resolution: {integrity: sha512-Ry9oiGmCAK91HrKMtCrKFWmSFWvYkpGglCeFAIqDdr9zdXmMMpJOmUJS7WWsW7fX81h6mwHmUZCQQ1E0PkSwYQ==}
