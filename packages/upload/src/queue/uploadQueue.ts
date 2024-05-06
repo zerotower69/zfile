@@ -18,7 +18,7 @@ import {
 } from "./uploadRequestQueue";
 import { UploadTask } from "./uploadTask";
 import { genFileId } from "../utils";
-import { TaskQueue } from "./TaskQueue.ts";
+import { TaskQueue } from "./TaskQueue";
 
 const DEFAULT_CHUNK_SIZE = 1024 * 1024;
 

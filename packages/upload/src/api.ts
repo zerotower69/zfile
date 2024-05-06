@@ -1,19 +1,17 @@
+import axios, { AxiosResponse } from "axios";
+import { isFunction, isObject, merge } from "lodash-es";
 import {
     CheckApiReturn,
     MergeApiReturn,
     UploadApiReturn,
     UploadChunk,
     UploadFile,
-} from "./interface";
-import {
     UploadActions,
     CheckApi,
     UploadApi,
     MergeApi,
-} from "./interface.ts";
-import axios, { AxiosResponse } from "axios";
-import { UploadTask } from "./queue/uploadTask.ts";
-import { isFunction, isObject, merge } from "lodash-es";
+} from "./interface";
+import { UploadTask } from "./queue/uploadTask";
 
 const checkTransformResponse: (
     response: AxiosResponse,

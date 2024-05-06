@@ -294,6 +294,7 @@ export function useSliceFile(
             promises.push(p);
             chunkCount += workerChunkCount;
         }
+        //@ts-ignore
         return Promise.all(promises).then((values) => {
             //strategy: all the hash of chunks sort, then get new hash
             const spark = new SparkMD5();

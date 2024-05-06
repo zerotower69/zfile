@@ -8,9 +8,7 @@ export interface ConfigurableWindow {
     window?: Window;
 }
 
-const defaultWindow = /* #__PURE__ */ isClient
-    ? window
-    : undefined;
+const defaultWindow = isClient ? window : undefined;
 
 export type WebWorkerStatus =
     | "PENDING"
@@ -126,6 +124,7 @@ export function useWebWorkerFn<
     };
 
     const callWorker = (...fnArgs: Parameters<T>) =>
+        //@ts-ignore
         new Promise<ReturnType<T>>((resolve, reject) => {
             promise = {
                 resolve,
@@ -142,6 +141,7 @@ export function useWebWorkerFn<
                 "[useWebWorkerFn] You can only run one instance of the worker at a time.",
             );
             /* eslint-disable-next-line prefer-promise-reject-errors */
+            //@ts-ignore
             return Promise.reject();
         }
 
