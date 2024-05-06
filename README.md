@@ -1,4 +1,6 @@
-<div align="center"> <a href="https://github.com/zerotower69/zfile" style="text-decoration: none"> <div style="font-size:70px;color:transparent;background-clip:text;-webkit-background-clip:text;background-image: linear-gradient(to right, #fa709a 0%, #fee140 100%);">ZFILE</div> </a> <br> <br>
+<div align="center"> <a href="https://github.com/zerotower69/zfile" style="text-decoration: none">
+<img src="./ZFILE.svg" alt="zfile"/>
+</a> <br> <br>
 
 [![license](https://img.shields.io/github/license/anncwb/vue-vben-admin.svg)](LICENSE)
 [![qq](https://img.shields.io/badge/QQ-876822711-blue)](https://qm.qq.com/q/wDaVQV2ddC)
