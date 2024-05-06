@@ -10,6 +10,14 @@ export default defineConfig({
     ['link',{rel:"icon",href:"./logo.svg"}]
   ],
   themeConfig:{
+    search:{
+      provider:"algolia",
+      options:{
+        appId: "6I0TTBOMDL",
+        apiKey: "86a464a8d312eab481432046047443ea",
+        indexName: "zerotower69io",
+      }
+    },
     logo:"/logo.svg",
     // https://vitepress.dev/reference/default-theme-config
     nav: [
