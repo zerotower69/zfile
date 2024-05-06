@@ -26,7 +26,7 @@ export class TaskQueue {
      */
     add<T>(task: taskFn<T>) {
         this.isCancel = false;
-        return new Promise((resolve, reject) => {
+        return new Promise<T>((resolve, reject) => {
             this.queue.push({
                 task,
                 resolve,
@@ -44,15 +44,10 @@ export class TaskQueue {
     }
 
     private _run() {
-        while (
-            this.runningCount <= this.parallelCount &&
-            this.queue.length &&
-            !this.isCancel
-        ) {
-            const { task, resolve, reject } =
-                this.queue.shift() as TaskContext;
+        while (this.runningCount <= this.parallelCount && this.queue.length && !this.isCancel) {
+            const { task, resolve, reject } = this.queue.shift() as TaskContext;
             this.runningCount++;
-            Promise.resolve(task())
+            Promise.resolve<any>(task())
                 .then(resolve, reject)
                 .finally(() => {
                     this.runningCount--;

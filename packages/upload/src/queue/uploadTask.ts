@@ -1,18 +1,8 @@
 import { debounce } from "lodash-es";
 import humanFormat from "human-format";
-import {
-    ProgressContext,
-    UploadChunk,
-    UploadFile,
-    UploadStatus,
-    WorkerConfig,
-} from "../interface";
+import { ProgressContext, UploadChunk, UploadFile, UploadStatus, WorkerConfig } from "../interface";
 import { UploadQueue } from "./uploadQueue";
-import {
-    getCheckChunkApi,
-    getMergeChunkApi,
-    getUploadChunkApi,
-} from "../api";
+import { getCheckChunkApi, getMergeChunkApi, getUploadChunkApi } from "../api";
 import { useSliceFile, UseSliceFileReturn } from "../slice";
 import { getError, transformError } from "../utils";
 
@@ -21,11 +11,7 @@ export interface UploadTaskOptions {
     file: UploadFile;
     uploadQueue: UploadQueue;
     status: UploadStatus;
-    onChangeStatus?: (
-        file: UploadFile,
-        status?: UploadStatus,
-        oldStatus?: UploadStatus,
-    ) => void;
+    onChangeStatus?: (file: UploadFile, status?: UploadStatus, oldStatus?: UploadStatus) => void;
     maxRetries?: number;
     worker?: WorkerConfig;
 }
@@ -41,26 +27,16 @@ export class UploadTask {
     private sliceContext: UseSliceFileReturn;
     private _options: UploadTaskOptions;
     private _runP?: Promise<void>;
-    private _runResolve?: (
-        value?: any | PromiseLike<any>,
-    ) => void;
+    private _runResolve?: (value?: any | PromiseLike<any>) => void;
     private _uploadedChunks: UploadChunk[];
     //@ts-ignore
     private _runReject?: (reason?: any) => void;
     private _running: boolean;
     private _uploadTime?: number;
     private _uploadedSize: number;
-    private updateFileProgress: (
-        task: UploadTask,
-        chunk: UploadChunk,
-    ) => void;
+    private updateFileProgress: (task: UploadTask, chunk: UploadChunk) => void;
     constructor(options: UploadTaskOptions) {
-        const {
-            uploadQueue,
-            file,
-            status,
-            maxRetries = 3,
-        } = options;
+        const { uploadQueue, file, status, maxRetries = 3 } = options;
         this._options = {
             ...options,
             status,
@@ -79,10 +55,7 @@ export class UploadTask {
         this._running = false;
         this._uploadedSize = 0;
         this._uploadedChunks = [];
-        this.updateFileProgress = debounce(
-            updateFileProgress,
-            100,
-        );
+        this.updateFileProgress = debounce(updateFileProgress, 100);
     }
 
     async start() {
@@ -123,16 +96,11 @@ export class UploadTask {
             if (this.status === UploadStatus.WAITING) {
                 this.status = UploadStatus.READING;
                 try {
-                    const data =
-                        await this.sliceContext.start();
+                    const data = await this.sliceContext.start();
                     this.status = UploadStatus.READY;
                     this.file.hash = data.fileHash;
                     this.chunks = data.fileChunks;
-                    console.log(
-                        "切片成功",
-                        this,
-                        this.file,
-                    );
+                    console.log("切片成功", this, this.file);
                     return true;
                 } catch (error) {
                     this.status = UploadStatus.FAILED;
@@ -151,138 +119,104 @@ export class UploadTask {
         this.sliceContext.stop();
     }
     startUpload() {
-        return this.uploadQueue.uploadingQueue.add(
-            async () => {
-                if (this.status === UploadStatus.WAITING) {
-                    this._runReject?.(
-                        getError("文件未切片"),
-                    );
-                    return this._runP;
-                }
-                this._uploadTime = performance.now();
-                //检查文件上传完成没有
-                const check = await this.checkChunkApi(
-                    this.file,
-                    this.chunks,
-                );
-                if (check.success) {
-                    //文件秒传
-                    this.uploadedSize = this.file.size;
-                    this.status = UploadStatus.SUCCESS;
-                    this._runResolve?.(check.response);
-                    return this._runP;
-                } else if (check.error) {
-                    //发生错误
-                    if (check.isCancel) {
-                        //取消上传
-                        this.status = UploadStatus.CANCEL;
-                        this._runReject?.(
-                            getError("上传取消"),
-                        );
-                        return this._runP;
-                    }
-                    //未知错误
-                    this.status = UploadStatus.FAILED;
-                    this._runReject?.(
-                        transformError(check.error),
-                    );
-                    return this._runP;
-                }
-                const waitingChunks = check.chunks!;
-                if (check.uploadedChunks) {
-                    this.uploadedChunks =
-                        check.uploadedChunks;
-                }
-                const uploads =
-                    await this.uploadChunks(waitingChunks);
-                const hasCancel = uploads.some(
-                    (upload) => upload.isCancel,
-                );
-                if (hasCancel) {
-                    //取消上传
-                    this.status = UploadStatus.CANCEL;
-                    this._runReject?.(getError("上传取消"));
-                    return this._runP;
-                }
-                //TODO:一定要确定全部完成？
-                const allSuccess = uploads.every(
-                    (upload) => upload.success,
-                );
-                if (!allSuccess) {
-                    //上传分片发生错误
-                    this.status = UploadStatus.FAILED;
-                    this._runReject?.(getError("上传取消"));
-                    return this._runP;
-                }
-                const checkAgain = await this.checkChunkApi(
-                    this.file,
-                    this.chunks,
-                );
-                if (checkAgain.isCancel) {
-                    //取消上传
-                    this.status = UploadStatus.CANCEL;
-                    this._runReject?.(getError("上传取消"));
-                    return this._runP;
-                }
-                if (checkAgain.error) {
-                    //检查接口错误
-                    this.status = UploadStatus.FAILED;
-                    this._runReject?.(
-                        getError("检查分片接口错误"),
-                    );
-                    return this._runP;
-                }
-                if (
-                    !checkAgain.success ||
-                    checkAgain.chunks!.length !== 0
-                ) {
-                    //未知错误
-                    this.status = UploadStatus.FAILED;
-                    this._runReject?.(getError("发生错误"));
-                    return this._runP;
-                }
-                // this.uploadedSize = (checkAgain?.uploadedChunks ?? []).reduce((acc, cur) => acc + cur.size, 0);
-                //开始合并
-                const mergeChunks =
-                    await this.mergeChunkApi(
-                        this.file,
-                        this.chunks,
-                    );
-                if (mergeChunks.isCancel) {
-                    //取消上传
-                    this.status = UploadStatus.CANCEL;
-                    this._runReject?.(getError("上传取消"));
-                    return this._runP;
-                }
-                if (mergeChunks.error) {
-                    //合并接口错误
-                    this.status = UploadStatus.FAILED;
-                    this._runReject?.(
-                        getError("检查分片接口错误"),
-                    );
-                    return this._runP;
-                }
-                if (!mergeChunks.success) {
-                    //未知错误
-                    this.status = UploadStatus.FAILED;
-                    this._runReject?.(getError("发生错误"));
-                    return this._runP;
-                }
-                this.status = UploadStatus.SUCCESS;
-                this._runResolve?.(mergeChunks.response);
+        return this.uploadQueue.uploadingQueue.add(async () => {
+            if (this.status === UploadStatus.WAITING) {
+                this._runReject?.(getError("文件未切片"));
                 return this._runP;
-            },
-        );
+            }
+            this._uploadTime = performance.now();
+            //检查文件上传完成没有
+            const check = await this.checkChunkApi(this.file, this.chunks);
+            if (check.success) {
+                //文件秒传
+                this.uploadedSize = this.file.size;
+                this.status = UploadStatus.SUCCESS;
+                this._runResolve?.(check.response);
+                return this._runP;
+            } else if (check.error) {
+                //发生错误
+                if (check.isCancel) {
+                    //取消上传
+                    this.status = UploadStatus.CANCEL;
+                    this._runReject?.(getError("上传取消"));
+                    return this._runP;
+                }
+                //未知错误
+                this.status = UploadStatus.FAILED;
+                this._runReject?.(transformError(check.error));
+                return this._runP;
+            }
+            const waitingChunks = check.chunks!;
+            if (check.uploadedChunks) {
+                this.uploadedChunks = check.uploadedChunks;
+            }
+            const uploads = await this.uploadChunks(waitingChunks);
+            const hasCancel = uploads.some((upload) => upload.isCancel);
+            if (hasCancel) {
+                //取消上传
+                this.status = UploadStatus.CANCEL;
+                this._runReject?.(getError("上传取消"));
+                return this._runP;
+            }
+            //TODO:一定要确定全部完成？
+            const allSuccess = uploads.every((upload) => upload.success);
+            if (!allSuccess) {
+                //上传分片发生错误
+                this.status = UploadStatus.FAILED;
+                this._runReject?.(getError("上传取消"));
+                return this._runP;
+            }
+            const checkAgain = await this.checkChunkApi(this.file, this.chunks);
+            if (checkAgain.isCancel) {
+                //取消上传
+                this.status = UploadStatus.CANCEL;
+                this._runReject?.(getError("上传取消"));
+                return this._runP;
+            }
+            if (checkAgain.error) {
+                //检查接口错误
+                this.status = UploadStatus.FAILED;
+                this._runReject?.(getError("检查分片接口错误"));
+                return this._runP;
+            }
+            if (!checkAgain.success || checkAgain.chunks!.length !== 0) {
+                //未知错误
+                this.status = UploadStatus.FAILED;
+                this._runReject?.(getError("发生错误"));
+                return this._runP;
+            }
+            // this.uploadedSize = (checkAgain?.uploadedChunks ?? []).reduce((acc, cur) => acc + cur.size, 0);
+            //开始合并
+            const mergeChunks = await this.mergeChunkApi(this.file, this.chunks);
+            if (mergeChunks.isCancel) {
+                //取消上传
+                this.status = UploadStatus.CANCEL;
+                this._runReject?.(getError("上传取消"));
+                return this._runP;
+            }
+            if (mergeChunks.error) {
+                //合并接口错误
+                this.status = UploadStatus.FAILED;
+                this._runReject?.(getError("检查分片接口错误"));
+                return this._runP;
+            }
+            if (!mergeChunks.success) {
+                //未知错误
+                this.status = UploadStatus.FAILED;
+                this._runReject?.(getError("发生错误"));
+                return this._runP;
+            }
+            this.status = UploadStatus.SUCCESS;
+            this._runResolve?.(mergeChunks.response);
+            return this._runP;
+        });
     }
 
     /**
      * 取消上传
      */
     cancelUpload(message = "手动取消") {
-        this.uploadQueue.requestQueue.cancelUpload(
-            this,
-            message,
-        );
+        this.uploadQueue.requestQueue.cancelUpload(this, message);
     }
 
     set running(val) {
@@ -326,11 +260,7 @@ export class UploadTask {
             case UploadStatus.SUCCESS:
                 return;
         }
-        this.options?.onChangeStatus?.(
-            this.file,
-            status,
-            this.status,
-        );
+        this.options?.onChangeStatus?.(this.file, status, this.status);
         this._status = status;
         // eslint-disable-next-line no-empty
         switch (
@@ -345,14 +275,8 @@ export class UploadTask {
 
     set uploadedChunks(list) {
         this._uploadedChunks = list;
-        this._uploadedSize = list.reduce(
-            (acc, current) => acc + current.size,
-            0,
-        );
-        console.log(
-            this._uploadedChunks,
-            this._uploadedSize,
-        );
+        this._uploadedSize = list.reduce((acc, current) => acc + current.size, 0);
+        console.log(this._uploadedChunks, this._uploadedSize);
     }
 
     set uploadTime(time: number) {
@@ -362,10 +286,7 @@ export class UploadTask {
         return this._uploadTime || 0;
     }
     get uploadedSize() {
-        const val = this._uploadedChunks.reduce(
-            (acc, current) => acc + current.size,
-            0,
-        );
+        const val = this._uploadedChunks.reduce((acc, current) => acc + current.size, 0);
         this._uploadedSize = val;
         return val;
     }
@@ -395,10 +316,7 @@ export class UploadTask {
         this.uploadTime = performance.now();
         while (currentIndex < chunks.length) {
             const chunk = chunks[currentIndex];
-            const task = this.uploadChunkApi(
-                chunk,
-                this.file,
-            );
+            const task = this.uploadChunkApi(chunk, this.file);
             task.then((resp) => {
                 if (resp.success) {
                     this.uploadedChunks.push(chunk);
@@ -413,15 +331,9 @@ export class UploadTask {
     }
 }
 
-function updateFileProgress(
-    task: UploadTask,
-    chunk: UploadChunk,
-) {
+function updateFileProgress(task: UploadTask, chunk: UploadChunk) {
     //上传总大小
-    const count = Math.min(
-        task.file.size,
-        task.uploadedSize,
-    );
+    const count = Math.min(task.file.size, task.uploadedSize);
     //剩余上传大小
     const left = task.file.size - count;
     const time = performance.now();
@@ -431,14 +343,11 @@ function updateFileProgress(
     const rangeSize = chunk.size;
     task.uploadedSize = count;
     //计算出的速率是 x byte/s
-    const rate = rangeSize
-        ? Math.round((1000 * rangeSize) / rangeTime)
-        : 0;
+    const rate = rangeSize ? Math.round((1000 * rangeSize) / rangeTime) : 0;
     //处理成可读的模式
     const rateText = humanFormat.bytes(rate);
     //百分比计算
-    const percentage =
-        Math.round((count / task.file.size) * 100) / 100;
+    const percentage = Math.round((count / task.file.size) * 100) / 100;
     task.file.percentage = percentage;
     const context: ProgressContext = {
         rate,
@@ -450,9 +359,5 @@ function updateFileProgress(
         file: task.file,
         raw: task.file.raw,
     };
-    task.uploadQueue.options?.onProgress?.(
-        percentage,
-        task.file,
-        context,
-    );
+    task.uploadQueue.options?.onProgress?.(percentage, task.file, context);
 }

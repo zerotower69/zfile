@@ -16,9 +16,8 @@ function jobRunner(userFunc: Function) {
         const userFuncArgs = e.data[0];
 
         // eslint-disable-next-line prefer-spread
-        return Promise.resolve(
-            userFunc.apply(undefined, userFuncArgs),
-        )
+        //@ts-ignore
+        return Promise.resolve(userFunc.apply(undefined, userFuncArgs))
             .then((result) => {
                 postMessage(["SUCCESS", result]);
             })

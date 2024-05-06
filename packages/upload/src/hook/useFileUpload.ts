@@ -1,7 +1,4 @@
-import {
-    UploadQueue,
-    UploadQueueOptions,
-} from "../queue/uploadQueue.ts";
+import { UploadQueue, UploadQueueOptions } from "../queue/uploadQueue";
 
 export function useFileUpload(options: UploadQueueOptions) {
     const uploadQueue = new UploadQueue(options);

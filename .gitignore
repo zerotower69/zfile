@@ -5,3 +5,4 @@
 **/uploads
 **/.turbo
 docs/.vitepress/cache
+**/tsconfig.tsbuildinfo
