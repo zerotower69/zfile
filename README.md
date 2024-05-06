@@ -28,6 +28,7 @@
 git clone https://github.com/zerotower69/zfile.git
 ```
 - 安装依赖
+
 **请注意：本项目的包管理工具为pnpm，版本>=8.10.0，node版本>=18.12.0**
 
 ```bash
