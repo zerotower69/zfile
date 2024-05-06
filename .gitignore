@@ -5,3 +5,4 @@
 **/uploads
 **/.turbo
 docs/.vitepress/cache
+/packages/upload/.rollup.cache/Users/zerotower/Documents/zero/big-upload/packages/upload/tsconfig.tsbuildinfo
