@@ -6,7 +6,11 @@ export default defineConfig({
   description: "一站式开箱大文件上传和下载，不依赖任何前端框架",
   metaChunk:true,
   base:"/zfile/",
+  head:[
+    ['link',{rel:"icon",href:"./logo.svg"}]
+  ],
   themeConfig:{
+    logo:"/logo.svg",
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: '主页', link: '/' },
@@ -24,6 +28,6 @@ export default defineConfig({
   vite:{
     server:{
       port:8000
-    }
+    },
   }
 })
