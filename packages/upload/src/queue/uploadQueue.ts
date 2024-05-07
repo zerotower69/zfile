@@ -1,6 +1,21 @@
-import axios, { AxiosHeaders, AxiosInstance, AxiosRequestConfig } from "axios";
-import { ProgressContext, RequestLimit, UploadActions, UploadFile, UploadRawFile, UploadStatus, WorkerConfig } from "../interface";
-import { RequestTask, UploadRequestQueue } from "./uploadRequestQueue";
+import axios, {
+    AxiosHeaders,
+    AxiosInstance,
+    AxiosRequestConfig,
+} from "axios";
+import {
+    ProgressContext,
+    RequestLimit,
+    UploadActions,
+    UploadFile,
+    UploadRawFile,
+    UploadStatus,
+    WorkerConfig,
+} from "../interface";
+import {
+    RequestTask,
+    UploadRequestQueue,
+} from "./uploadRequestQueue";
 import { UploadTask } from "./uploadTask";
 import { genFileId } from "../utils";
 import { TaskQueue } from "./TaskQueue";
@@ -46,7 +61,11 @@ export interface UploadQueueOptions {
      * @param file 上传文件
      * @param percentage 进度
      */
-    onProgress?: (percentage: number, file: UploadFile, context?: ProgressContext) => void;
+    onProgress?: (
+        percentage: number,
+        file: UploadFile,
+        context?: ProgressContext,
+    ) => void;
 }
 export class UploadQueue {
     actions: UploadActions;
@@ -102,7 +121,12 @@ export class UploadQueue {
      * @param openRetry 启动重试，默认true
      * @param retries 重试次数，默认3
      */
-    request<T = any>(config: AxiosRequestConfig, upload: UploadTask, openRetry = true, retries = 3) {
+    request<T = any>(
+        config: AxiosRequestConfig,
+        upload: UploadTask,
+        openRetry = true,
+        retries = 3,
+    ) {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const that = this;
         const source = axios.CancelToken.source();

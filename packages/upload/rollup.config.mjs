@@ -13,11 +13,7 @@ export default defineConfig({
         {
             file: "./dist/index.mjs",
             format: "es",
-        },
-        {
-            file: "./dist/index.js",
-            format: "cjs",
-        },
+        }
     ],
     plugins: [
         polyfillNode(),

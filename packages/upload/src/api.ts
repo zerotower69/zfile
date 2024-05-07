@@ -13,7 +13,10 @@ import {
 } from "./interface";
 import { UploadTask } from "./queue/uploadTask";
 
-const checkTransformResponse: (response: AxiosResponse, chunks: UploadChunk[]) => Awaited<CheckApiReturn> = (
+const checkTransformResponse: (
+    response: AxiosResponse,
+    chunks: UploadChunk[],
+) => Awaited<CheckApiReturn> = (
     response: AxiosResponse,
     chunks: UploadChunk[],
 ) => {
@@ -38,10 +41,16 @@ const checkTransformResponse: (response: AxiosResponse, chunks: UploadChunk[]) =
         hashSet.add(list[i].hash);
     }
     const leftChunks = chunks.filter((chunk) => {
-        return !(indexSet.has(chunk.index) && hashSet.has(chunk.hash as string));
+        return !(
+            indexSet.has(chunk.index) &&
+            hashSet.has(chunk.hash as string)
+        );
     });
     const uploadedChunks = chunks.filter((chunk) => {
-        return indexSet.has(chunk.index) && hashSet.has(chunk.hash as string);
+        return (
+            indexSet.has(chunk.index) &&
+            hashSet.has(chunk.hash as string)
+        );
     });
     const check = !leftChunks.length;
     return {
@@ -52,7 +61,10 @@ const checkTransformResponse: (response: AxiosResponse, chunks: UploadChunk[]) =
     };
 };
 
-const checkTransformError = (error: any, isCancel: boolean): Awaited<CheckApiReturn> => {
+const checkTransformError = (
+    error: any,
+    isCancel: boolean,
+): Awaited<CheckApiReturn> => {
     return {
         success: false,
         error,
@@ -60,14 +72,19 @@ const checkTransformError = (error: any, isCancel: boolean): Awaited<CheckApiRet
     };
 };
 
-const uploadTransformResponse = (response: AxiosResponse): Awaited<UploadApiReturn> => {
+const uploadTransformResponse = (
+    response: AxiosResponse,
+): Awaited<UploadApiReturn> => {
     return {
         success: true,
         response,
     };
 };
 
-const uploadTransformError = (error: any, isCancel: boolean): Awaited<UploadApiReturn> => {
+const uploadTransformError = (
+    error: any,
+    isCancel: boolean,
+): Awaited<UploadApiReturn> => {
     return {
         success: false,
         error,
@@ -75,14 +92,19 @@ const uploadTransformError = (error: any, isCancel: boolean): Awaited<UploadApiR
     };
 };
 
-const mergeTransformResponse = (response: AxiosResponse): Awaited<MergeApiReturn> => {
+const mergeTransformResponse = (
+    response: AxiosResponse,
+): Awaited<MergeApiReturn> => {
     return {
         success: true,
         response,
     };
 };
 
-const mergeTransformError = (error: any, isCancel: boolean): Awaited<MergeApiReturn> => {
+const mergeTransformError = (
+    error: any,
+    isCancel: boolean,
+): Awaited<MergeApiReturn> => {
     return {
         success: false,
         error,
@@ -95,20 +117,35 @@ const mergeTransformError = (error: any, isCancel: boolean): Awaited<MergeApiRet
  * @param action
  * @param task
  */
-export function getCheckChunkApi(action: UploadActions["check"], task: UploadTask): CheckApi {
-    const { action: url, method, timeout, transformPrams, transformData, transformResponse, transformError, retries = 3 } = action;
+export function getCheckChunkApi(
+    action: UploadActions["check"],
+    task: UploadTask,
+): CheckApi {
+    const {
+        action: url,
+        method,
+        timeout,
+        transformPrams,
+        transformData,
+        transformResponse,
+        transformError,
+        retries = 3,
+    } = action;
     //normalize action
     return (file: UploadFile, chunks?: UploadChunk[]) => {
-        const params = transformPrams?.call(null, file) ?? {};
+        const params =
+            transformPrams?.call(null, file) ?? {};
         const data = transformData?.call(null, file) ?? {};
         if (isObject(file.params)) {
             merge(params, file.params);
         }
         if (isObject(file.data)) {
             if (data instanceof FormData) {
-                Object.entries(file.data).forEach(([key, value]) => {
-                    data.append(key, value);
-                });
+                Object.entries(file.data).forEach(
+                    ([key, value]) => {
+                        data.append(key, value);
+                    },
+                );
             } else {
                 merge(data, file.data);
             }
@@ -128,12 +165,27 @@ export function getCheckChunkApi(action: UploadActions["check"], task: UploadTas
             )
             .then(
                 (resp) => {
-                    return isFunction(transformResponse) ? transformResponse(resp, chunks, file) : checkTransformResponse(resp, chunks!);
+                    return isFunction(transformResponse)
+                        ? transformResponse(
+                              resp,
+                              chunks,
+                              file,
+                          )
+                        : checkTransformResponse(
+                              resp,
+                              chunks!,
+                          );
                 },
                 (error) =>
                     isFunction(transformError)
-                        ? transformError(error, axios.isCancel(error))
-                        : checkTransformError(error, axios.isCancel(error)),
+                        ? transformError(
+                              error,
+                              axios.isCancel(error),
+                          )
+                        : checkTransformError(
+                              error,
+                              axios.isCancel(error),
+                          ),
             );
     };
 }
@@ -145,7 +197,10 @@ let uploadId = 1;
  * @param action
  * @param task
  */
-export function getUploadChunkApi<D = any>(action: UploadActions["upload"], task: UploadTask): UploadApi<D> {
+export function getUploadChunkApi<D = any>(
+    action: UploadActions["upload"],
+    task: UploadTask,
+): UploadApi<D> {
     const {
         action: url,
         method,
@@ -157,12 +212,18 @@ export function getUploadChunkApi<D = any>(action: UploadActions["upload"], task
         transformError,
         retries = 3,
     } = action;
-    return async function (chunk: UploadChunk, file?: UploadFile) {
-        const data = transformData?.call(null, chunk, file) ?? new FormData();
+    return async function (
+        chunk: UploadChunk,
+        file?: UploadFile,
+    ) {
+        const data =
+            transformData?.call(null, chunk, file) ??
+            new FormData();
         if (!data.has(fileField)) {
             data.append(fileField, chunk.raw);
         }
-        const params = transformParams?.call(null, chunk, file) ?? {};
+        const params =
+            transformParams?.call(null, chunk, file) ?? {};
         return task.uploadQueue
             .request(
                 {
@@ -182,11 +243,23 @@ export function getUploadChunkApi<D = any>(action: UploadActions["upload"], task
             )
             .then(
                 (response) =>
-                    isFunction(transformResponse) ? transformResponse(response, chunk, file) : uploadTransformResponse(response),
+                    isFunction(transformResponse)
+                        ? transformResponse(
+                              response,
+                              chunk,
+                              file,
+                          )
+                        : uploadTransformResponse(response),
                 (error) =>
                     isFunction(transformError)
-                        ? transformError(error, axios.isCancel(error))
-                        : uploadTransformError(error, axios.isCancel(error)),
+                        ? transformError(
+                              error,
+                              axios.isCancel(error),
+                          )
+                        : uploadTransformError(
+                              error,
+                              axios.isCancel(error),
+                          ),
             );
     };
 }
@@ -196,11 +269,31 @@ export function getUploadChunkApi<D = any>(action: UploadActions["upload"], task
  * @param action
  * @param task
  */
-export function getMergeChunkApi(action: UploadActions["merge"], task: UploadTask): MergeApi {
-    const { action: url, method, timeout, transformPrams, transformData, transformResponse, transformError, retries = 3 } = action;
+export function getMergeChunkApi(
+    action: UploadActions["merge"],
+    task: UploadTask,
+): MergeApi {
+    const {
+        action: url,
+        method,
+        timeout,
+        transformPrams,
+        transformData,
+        transformResponse,
+        transformError,
+        retries = 3,
+    } = action;
     return async function (file, chunks) {
-        const params = transformPrams?.call(null, file, chunks);
-        const data = transformData?.call(null, file, chunks);
+        const params = transformPrams?.call(
+            null,
+            file,
+            chunks,
+        );
+        const data = transformData?.call(
+            null,
+            file,
+            chunks,
+        );
         return task.uploadQueue
             .request(
                 {
@@ -216,16 +309,31 @@ export function getMergeChunkApi(action: UploadActions["merge"], task: UploadTas
             )
             .then(
                 (response) =>
-                    isFunction(transformResponse) ? transformResponse(response, file, chunks) : mergeTransformResponse(response),
+                    isFunction(transformResponse)
+                        ? transformResponse(
+                              response,
+                              file,
+                              chunks,
+                          )
+                        : mergeTransformResponse(response),
                 (error) =>
                     isFunction(transformError)
-                        ? transformError(error, axios.isCancel(error))
-                        : mergeTransformError(error, axios.isCancel(error)),
+                        ? transformError(
+                              error,
+                              axios.isCancel(error),
+                          )
+                        : mergeTransformError(
+                              error,
+                              axios.isCancel(error),
+                          ),
             );
     };
 }
 type RetryFn<T = any> = () => Promise<T>;
-export async function retryAsyncFn<T = any>(fn: RetryFn<T>, retries: number) {
+export async function retryAsyncFn<T = any>(
+    fn: RetryFn<T>,
+    retries: number,
+) {
     let retriesCount = 0;
     return new Promise<T>((resolve, reject) => {
         async function recurveFn() {

@@ -10,9 +10,15 @@ export interface ConfigurableWindow {
 
 const defaultWindow = isClient ? window : undefined;
 
-export type WebWorkerStatus = "PENDING" | "SUCCESS" | "RUNNING" | "ERROR" | "TIMEOUT_EXPIRED";
+export type WebWorkerStatus =
+    | "PENDING"
+    | "SUCCESS"
+    | "RUNNING"
+    | "ERROR"
+    | "TIMEOUT_EXPIRED";
 
-export interface UseWebWorkerOptions extends ConfigurableWindow {
+export interface UseWebWorkerOptions
+    extends ConfigurableWindow {
     /**
      * Number of milliseconds before killing the worker
      *
@@ -24,16 +30,27 @@ export interface UseWebWorkerOptions extends ConfigurableWindow {
      */
     dependencies?: string[];
 
-    onWorkerStatusChange?: (status: WebWorkerStatus) => void;
+    onWorkerStatusChange?: (
+        status: WebWorkerStatus,
+    ) => void;
 }
 
-export function useWebWorkerFn<T extends (...fnArgs: any[]) => any>(fn: T, options: UseWebWorkerOptions = {}) {
-    const { dependencies = [], timeout, window = defaultWindow, onWorkerStatusChange = () => {} } = options;
+export function useWebWorkerFn<
+    T extends (...fnArgs: any[]) => any,
+>(fn: T, options: UseWebWorkerOptions = {}) {
+    const {
+        dependencies = [],
+        timeout,
+        window = defaultWindow,
+        onWorkerStatusChange = () => {},
+    } = options;
 
     let worker: (Worker & { _url?: string }) | undefined;
     let workerStatus: WebWorkerStatus = "PENDING";
     let promise: {
-        reject?: (result: ReturnType<T> | ErrorEvent) => void;
+        reject?: (
+            result: ReturnType<T> | ErrorEvent,
+        ) => void;
         resolve?: (result: ReturnType<T>) => void;
     } = {};
     let timeoutId: number | undefined;
@@ -44,7 +61,9 @@ export function useWebWorkerFn<T extends (...fnArgs: any[]) => any>(fn: T, optio
     };
 
     //终止worker线程，其会被移除
-    const workerTerminate = (status: WebWorkerStatus = "PENDING") => {
+    const workerTerminate = (
+        status: WebWorkerStatus = "PENDING",
+    ) => {
         if (worker && worker._url && window) {
             worker.terminate();
             URL.revokeObjectURL(worker._url);
@@ -58,13 +77,23 @@ export function useWebWorkerFn<T extends (...fnArgs: any[]) => any>(fn: T, optio
     workerTerminate();
 
     const generateWorker = () => {
-        const blobUrl = createWorkerBlobUrl(fn, dependencies);
-        const newWorker: Worker & { _url?: string } = new Worker(blobUrl);
+        const blobUrl = createWorkerBlobUrl(
+            fn,
+            dependencies,
+        );
+        const newWorker: Worker & { _url?: string } =
+            new Worker(blobUrl);
         newWorker._url = blobUrl;
 
         newWorker.onmessage = (e: MessageEvent) => {
-            const { resolve = () => {}, reject = () => {} } = promise;
-            const [status, result] = e.data as [WebWorkerStatus, ReturnType<T>];
+            const {
+                resolve = () => {},
+                reject = () => {},
+            } = promise;
+            const [status, result] = e.data as [
+                WebWorkerStatus,
+                ReturnType<T>,
+            ];
 
             switch (status) {
                 case "SUCCESS":
@@ -86,7 +115,10 @@ export function useWebWorkerFn<T extends (...fnArgs: any[]) => any>(fn: T, optio
         };
 
         if (timeout) {
-            timeoutId = setTimeout(() => workerTerminate("TIMEOUT_EXPIRED"), timeout) as any;
+            timeoutId = setTimeout(
+                () => workerTerminate("TIMEOUT_EXPIRED"),
+                timeout,
+            ) as any;
         }
         return newWorker;
     };
@@ -105,7 +137,9 @@ export function useWebWorkerFn<T extends (...fnArgs: any[]) => any>(fn: T, optio
 
     const workerFn = (...fnArgs: Parameters<T>) => {
         if (workerStatus === "RUNNING") {
-            console.error("[useWebWorkerFn] You can only run one instance of the worker at a time.");
+            console.error(
+                "[useWebWorkerFn] You can only run one instance of the worker at a time.",
+            );
             /* eslint-disable-next-line prefer-promise-reject-errors */
             //@ts-ignore
             return Promise.reject();

@@ -1,4 +1,8 @@
-import { UploadChunk, UploadFile, UploadRawFile } from "../interface";
+import {
+    UploadChunk,
+    UploadFile,
+    UploadRawFile,
+} from "../interface";
 import SparkMD5 from "spark-md5";
 import { getConcurrency } from "../utils";
 import { useWebWorkerFn, WebWorkerStatus } from "../worker";
@@ -22,23 +26,49 @@ export function sliceFile(
     timeout = 5 * 60 * 1000,
     SPARK_MD5_URL = "https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/spark-md5/3.0.2/spark-md5.min.js",
 ) {
-    return useWebWorkerFn<(data: { fileUid: number; file: UploadRawFile; chunkSize: number; start: number; end: number }) => SliceReturn>(
+    return useWebWorkerFn<
+        (data: {
+            fileUid: number;
+            file: UploadRawFile;
+            chunkSize: number;
+            start: number;
+            end: number;
+        }) => SliceReturn
+    >(
         //@ts-ignore
         (data) => {
             return new Promise((resolve, reject) => {
-                const { fileUid, file, chunkSize, start, end } = data;
+                const {
+                    fileUid,
+                    file,
+                    chunkSize,
+                    start,
+                    end,
+                } = data;
                 const blobSlice = File.prototype.slice,
                     spark = new SparkMD5.ArrayBuffer(),
                     fileChunks: UploadChunk[] = [],
                     fileReader = new FileReader();
                 let currentIndex = start;
-                let currentChunk = blobSlice.call(file, 0, chunkSize);
+                let currentChunk = blobSlice.call(
+                    file,
+                    0,
+                    chunkSize,
+                );
                 let current: UploadChunk | null = null;
                 function loadNext() {
-                    const startPos = currentIndex * chunkSize,
-                        endPos = Math.min(startPos + chunkSize, file.size);
+                    const startPos =
+                            currentIndex * chunkSize,
+                        endPos = Math.min(
+                            startPos + chunkSize,
+                            file.size,
+                        );
 
-                    currentChunk = blobSlice.call(file, startPos, endPos);
+                    currentChunk = blobSlice.call(
+                        file,
+                        startPos,
+                        endPos,
+                    );
                     current = {
                         raw: currentChunk,
                         filename: file.name,
@@ -46,21 +76,35 @@ export function sliceFile(
                         uid: fileUid + currentIndex,
                         size: currentChunk.size,
                     };
-                    fileReader.readAsArrayBuffer(currentChunk);
+                    fileReader.readAsArrayBuffer(
+                        currentChunk,
+                    );
                 }
 
                 // 处理每一块的分片
                 fileReader.onload = function (e) {
-                    spark.append(e.target!.result as ArrayBuffer); // Append array buffer
+                    spark.append(
+                        e.target!.result as ArrayBuffer,
+                    ); // Append array buffer
                     currentIndex++;
 
-                    const chunkSpark = new SparkMD5.ArrayBuffer();
-                    chunkSpark.append(e.target!.result as ArrayBuffer);
+                    const chunkSpark =
+                        new SparkMD5.ArrayBuffer();
+                    chunkSpark.append(
+                        e.target!.result as ArrayBuffer,
+                    );
                     current!.hash = chunkSpark.end();
                     fileChunks.push(current!);
-                    const startPos = currentIndex * chunkSize,
-                        endPos = Math.min(startPos + chunkSize, file.size);
-                    if (currentIndex > end || startPos >= endPos) {
+                    const startPos =
+                            currentIndex * chunkSize,
+                        endPos = Math.min(
+                            startPos + chunkSize,
+                            file.size,
+                        );
+                    if (
+                        currentIndex > end ||
+                        startPos >= endPos
+                    ) {
                         // 计算完成后，返回结果
                         resolve({
                             fileHash: spark.end(),
@@ -120,7 +164,10 @@ export function singleSliceFile(file: UploadFile) {
  * @param file
  * @param maxThread 最大线程数
  */
-export function multipleSliceFile(file: UploadFile, maxThread = 6) {
+export function multipleSliceFile(
+    file: UploadFile,
+    maxThread = 6,
+) {
     let thread = Math.min(getConcurrency(), maxThread);
     if (file.total <= thread) {
         thread = 1;
@@ -129,12 +176,17 @@ export function multipleSliceFile(file: UploadFile, maxThread = 6) {
     const workerChunkCount = Math.ceil(file.total / thread);
     let chunkCount = -1;
     const workFns: (() => Promise<SliceReturn>)[] = [];
-    const terminateFns: ReturnType<typeof sliceFile>["workerTerminate"][] = [];
+    const terminateFns: ReturnType<
+        typeof sliceFile
+    >["workerTerminate"][] = [];
     const promises: Promise<SliceReturn>[] = [];
     for (let i = 0; i < thread; i++) {
         const { workerFn, workerTerminate } = sliceFile();
         const start = chunkCount + 1;
-        const end = Math.min(chunkCount + workerChunkCount, file.total - 1);
+        const end = Math.min(
+            chunkCount + workerChunkCount,
+            file.total - 1,
+        );
         if (start > end) {
             break;
         }
@@ -190,24 +242,42 @@ export function multipleSliceFile(file: UploadFile, maxThread = 6) {
     };
 }
 
-export function useSliceFile(file: UploadFile, thread = 1, timeout = 5 * 60 * 1000, url?: string): UseSliceFileReturn {
-    thread = Math.min(Math.max(thread, 1), getConcurrency());
-    thread = Number.isInteger(thread) ? thread : Math.round(thread);
+export function useSliceFile(
+    file: UploadFile,
+    thread = 1,
+    timeout = 5 * 60 * 1000,
+    url?: string,
+): UseSliceFileReturn {
+    thread = Math.min(
+        Math.max(thread, 1),
+        getConcurrency(),
+    );
+    thread = Number.isInteger(thread)
+        ? thread
+        : Math.round(thread);
     if (file.total <= thread) {
         thread = 1;
     }
-    const clearFns: ReturnType<typeof sliceFile>["workerTerminate"][] = [];
+    const clearFns: ReturnType<
+        typeof sliceFile
+    >["workerTerminate"][] = [];
     const workerChunkCount = Math.ceil(file.total / thread);
     let chunkCount = -1;
     const promises: Promise<SliceReturn>[] = [];
 
     async function start(): Promise<SliceReturn> {
         for (let i = 1; i <= thread; i++) {
-            const { workerFn, workerTerminate } = sliceFile(timeout, url);
+            const { workerFn, workerTerminate } = sliceFile(
+                timeout,
+                url,
+            );
             workerTerminate();
             clearFns.push(workerTerminate);
             const start = chunkCount + 1,
-                end = Math.min(chunkCount + workerChunkCount, file.total - 1);
+                end = Math.min(
+                    chunkCount + workerChunkCount,
+                    file.total - 1,
+                );
             if (start > end) {
                 break;
             }
