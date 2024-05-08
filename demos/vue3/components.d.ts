@@ -8,8 +8,10 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     Button: typeof import('./src/components/UploadList/Button.vue')['default']
+    DragBall: typeof import('./src/components/UploadList/DragBall.vue')['default']
     Progress: typeof import('./src/components/UploadList/Progress.vue')['default']
-    UploadList: typeof import('./src/components/UploadList/UploadList.vue')['default']
+    UploadList: typeof import('./src/components/UploadList/index.vue')['default']
+    UploadModal: typeof import('./src/components/UploadList/UploadModal.vue')['default']
     VxeButton: typeof import('vxe-table/es/button/index.js')['VxeButton']
     VxeColumn: typeof import('vxe-table/es/column/index.js')['VxeColumn']
     VxeTable: typeof import('vxe-table/es/table/index.js')['VxeTable']
