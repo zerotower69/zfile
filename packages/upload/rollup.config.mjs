@@ -4,7 +4,9 @@ import commonjs from "@rollup/plugin-commonjs";
 import terser from "@rollup/plugin-terser";
 import json from "@rollup/plugin-json"
 import polyfillNode from "rollup-plugin-polyfill-node";
+import alias from "@rollup/plugin-alias"
 import { defineConfig } from "rollup";
+import path from "node:path"
 
 export default defineConfig({
     input: "./src/index.ts",
@@ -16,6 +18,13 @@ export default defineConfig({
         }
     ],
     plugins: [
+      // alias({
+      //   entries:[
+      //     {
+      //       find:"@/",replacement:path.resolve(process.cwd(),'src')
+      //     }
+      //   ]
+      // }),
         polyfillNode(),
         json(),
         nodeResolve({

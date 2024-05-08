@@ -4,6 +4,7 @@ import {
     AxiosResponse,
     Method,
 } from "axios";
+import { UploadTask } from "./queue/uploadTask";
 
 export interface UploadFile {
     name: string;
@@ -17,6 +18,9 @@ export interface UploadFile {
     params?: Record<string, any>;
     data?: Record<string, any>;
     chunks?: UploadChunk[];
+    uploaded: number;
+    status: UploadStatus;
+    task?: UploadTask;
 }
 
 export interface UploadChunk {
@@ -33,7 +37,7 @@ export interface UploadRawFile extends File {
     uid: number;
 }
 
-export interface ProgressContext {
+export interface UploadProgressEvent {
     rate: number;
     rateText: string;
     uploaded: number;
@@ -278,6 +282,7 @@ export interface MergeAction {
 }
 
 export interface UploadActions {
+    baseURL?: string;
     upload: UploadAction;
     check: CheckAction;
     merge: MergeAction;

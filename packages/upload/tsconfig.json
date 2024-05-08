@@ -28,9 +28,6 @@
     "declarationDir": "./dist",
     "noImplicitAny": false,
     "importHelpers": false,
-    "paths": {
-      "@/*":["src/*"]
-    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]

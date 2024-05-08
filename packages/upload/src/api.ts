@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from "axios";
-import { isFunction, isObject, merge } from "lodash-es";
+import { isFunction } from "lodash-es";
 import {
     CheckApiReturn,
     MergeApiReturn,
@@ -12,6 +12,7 @@ import {
     MergeApi,
 } from "./interface";
 import { UploadTask } from "./queue/uploadTask";
+import { normalizeUrl } from "./utils";
 
 const checkTransformResponse: (
     response: AxiosResponse,
@@ -136,24 +137,13 @@ export function getCheckChunkApi(
         const params =
             transformPrams?.call(null, file) ?? {};
         const data = transformData?.call(null, file) ?? {};
-        if (isObject(file.params)) {
-            merge(params, file.params);
-        }
-        if (isObject(file.data)) {
-            if (data instanceof FormData) {
-                Object.entries(file.data).forEach(
-                    ([key, value]) => {
-                        data.append(key, value);
-                    },
-                );
-            } else {
-                merge(data, file.data);
-            }
-        }
         return task.uploadQueue
             .request(
                 {
-                    url: url,
+                    url: normalizeUrl(
+                        url,
+                        task.uploadQueue.actions.baseURL,
+                    ),
                     method: method,
                     timeout: timeout,
                     params: params,
@@ -227,7 +217,10 @@ export function getUploadChunkApi<D = any>(
         return task.uploadQueue
             .request(
                 {
-                    url: url,
+                    url: normalizeUrl(
+                        url,
+                        task.actions.baseURL,
+                    ),
                     method: method,
                     timeout: timeout,
                     data: data,
@@ -297,7 +290,10 @@ export function getMergeChunkApi(
         return task.uploadQueue
             .request(
                 {
-                    url: url,
+                    url: normalizeUrl(
+                        url,
+                        task.actions.baseURL,
+                    ),
                     method: method,
                     timeout: timeout,
                     params: params,

@@ -10,3 +10,16 @@ export const genFileId = () => Date.now() + fileId++;
 
 //生成切片uid
 export const genChunkId = () => Date.now() + chunkId++;
+
+/**
+ * 处理url
+ * @param url
+ * @param baseURL
+ */
+export const normalizeUrl = (
+    url: string,
+    baseURL?: string,
+) => {
+    if (!baseURL || /^http(s)*/.test(url)) return url;
+    return baseURL + url;
+};

@@ -27,6 +27,7 @@ export type RequestTask<D = any> = (() => Promise<
     _source?: CancelTokenSource;
     _isOpenRetry?: boolean;
     _retries?: number;
+    _url?: string;
 };
 
 interface TaskContext<T = any> {
@@ -60,14 +61,15 @@ export class UploadRequestQueue {
     queue: WeakMap<UploadTask, TaskContext[]>;
     uploadTasks: UploadTask[];
     tokenSource: WeakMap<TaskContext, CancelTokenSource>;
+    errorMap: Map<string, number>;
     private _current: number;
     private timer?: number;
     private isThrottle: boolean;
     private running = true;
     private _runningCount: number;
-    private parallel: number;
-    private requestLimit: number;
-    private maxRetries: number;
+    private readonly parallel: number;
+    private readonly requestLimit: number;
+    private readonly maxRetries: number;
     constructor(options: UploadRequestQueueOptions) {
         const {
             parallel = 2,
@@ -84,6 +86,7 @@ export class UploadRequestQueue {
         this.requestLimit = Math.min(6, requestLimit);
         this.isThrottle = false;
         this.maxRetries = maxRetries;
+        this.errorMap = new Map();
     }
 
     /**
@@ -221,39 +224,62 @@ export class UploadRequestQueue {
         this.runningCount++;
         const source = task._source!;
         this.tokenSource.set(context, source);
+        const count = this.errorMap.get(task._url) || 0;
+        if (count >= 6) {
+            reject(
+                new axios.CanceledError(
+                    "接口请求失败次数过多，停止访问",
+                ),
+            );
+            this.runningCount--;
+            this.run();
+            return;
+        }
         //运行task,拿到promise
         const promise = Promise.resolve(task());
         //响应成功，直接返回
         promise.then((value) => {
-            this.runningCount--;
+            if (this.errorMap.has(task._url)) {
+                this.errorMap.set(task._url, 0);
+            }
             this.tokenSource.delete(context);
             resolve(value);
         });
         //响应失败
-        promise.catch((reason) => {
-            //如果是被手动取消的
-            if (axios.isCancel(reason)) {
-                this.runningCount--;
-                this.tokenSource.delete(context);
-                reject(reason);
-                return;
-            }
-            const isOpenRetry = task?._isOpenRetry ?? true;
-            const maxRetries =
-                task?._retries ?? this.maxRetries;
-            //TODO:进一步统计错误信息
-            if (!isOpenRetry || retries! >= maxRetries) {
-                this.runningCount--;
-                this.tokenSource.delete(context);
-                reject(reason);
-                return;
-            }
-            //请求重试
-            context.retries = (retries || 0) + 1;
-            setTimeout(() => {
+        promise
+            .catch((reason) => {
+                //如果是被手动取消的
+                if (axios.isCancel(reason)) {
+                    this.tokenSource.delete(context);
+                    reject(reason);
+                    return;
+                }
+                if (!this.errorMap.has(task._url)) {
+                    this.errorMap.set(task._url, 0);
+                }
+                const count = this.errorMap.get(task._url);
+                this.errorMap.set(task._url, count + 1);
+                const isOpenRetry =
+                    task?._isOpenRetry ?? true;
+                const maxRetries =
+                    task?._retries ?? this.maxRetries;
+                //TODO:进一步统计错误信息
+                if (
+                    !isOpenRetry ||
+                    retries! >= maxRetries
+                ) {
+                    this.tokenSource.delete(context);
+                    reject(reason);
+                    return;
+                }
+                //请求重试
+                context.retries = (retries || 0) + 1;
                 this.add(upload, context);
-            }, 100);
-        });
+            })
+            .finally(() => {
+                this.runningCount--;
+                this.run();
+            });
     }
 
     set current(val: number) {

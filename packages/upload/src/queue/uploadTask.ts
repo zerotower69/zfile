@@ -1,7 +1,6 @@
-import { debounce } from "lodash-es";
 import humanFormat from "human-format";
 import {
-    ProgressContext,
+    UploadProgressEvent,
     UploadChunk,
     UploadFile,
     UploadStatus,
@@ -50,10 +49,6 @@ export class UploadTask {
     private _running: boolean;
     private _uploadTime?: number;
     private _uploadedSize: number;
-    private updateFileProgress: (
-        task: UploadTask,
-        chunk: UploadChunk,
-    ) => void;
     constructor(options: UploadTaskOptions) {
         const {
             uploadQueue,
@@ -69,7 +64,8 @@ export class UploadTask {
         this.id = taskId++;
         this.uploadQueue = uploadQueue;
         this.file = file;
-        this._status = status;
+        this.file.task = this;
+        this.status = status;
         this.sliceContext = useSliceFile(
             file,
             this.options?.worker?.thread ?? 4,
@@ -79,10 +75,6 @@ export class UploadTask {
         this._running = false;
         this._uploadedSize = 0;
         this._uploadedChunks = [];
-        this.updateFileProgress = debounce(
-            updateFileProgress,
-            100,
-        );
     }
 
     async start() {
@@ -285,6 +277,16 @@ export class UploadTask {
         );
     }
 
+    /**
+     * 取消任务
+     * @param message
+     */
+    stop(message: string) {
+        this.cancelSlice();
+        this.cancelUpload(message);
+        this.running = false;
+    }
+
     set running(val) {
         this._running = val;
     }
@@ -311,7 +313,7 @@ export class UploadTask {
     }
 
     get status() {
-        return this._status;
+        return this.file.status;
     }
     /**
      * 改变当前上传任务状态
@@ -331,7 +333,7 @@ export class UploadTask {
             status,
             this.status,
         );
-        this._status = status;
+        this.file.status = status;
         // eslint-disable-next-line no-empty
         switch (
             status
@@ -366,11 +368,11 @@ export class UploadTask {
             (acc, current) => acc + current.size,
             0,
         );
-        this._uploadedSize = val;
+        this.file.uploaded = val;
         return val;
     }
     set uploadedSize(val) {
-        this._uploadedSize = val;
+        this.file.uploaded = val;
     }
 
     get checkChunkApi() {
@@ -402,7 +404,7 @@ export class UploadTask {
             task.then((resp) => {
                 if (resp.success) {
                     this.uploadedChunks.push(chunk);
-                    this.updateFileProgress(this, chunk);
+                    this.updateFileProgress(chunk);
                 }
                 return resp;
             });
@@ -411,48 +413,45 @@ export class UploadTask {
         }
         return Promise.all(tasks);
     }
-}
-
-function updateFileProgress(
-    task: UploadTask,
-    chunk: UploadChunk,
-) {
-    //上传总大小
-    const count = Math.min(
-        task.file.size,
-        task.uploadedSize,
-    );
-    //剩余上传大小
-    const left = task.file.size - count;
-    const time = performance.now();
-    //时间刻度
-    const rangeTime = time - task.uploadTime;
-    //由于每次调用在chunk上传成功后，因此这段时间的上传大小就是上传的这个chunk的大小
-    const rangeSize = chunk.size;
-    task.uploadedSize = count;
-    //计算出的速率是 x byte/s
-    const rate = rangeSize
-        ? Math.round((1000 * rangeSize) / rangeTime)
-        : 0;
-    //处理成可读的模式
-    const rateText = humanFormat.bytes(rate);
-    //百分比计算
-    const percentage =
-        Math.round((count / task.file.size) * 100) / 100;
-    task.file.percentage = percentage;
-    const context: ProgressContext = {
-        rate,
-        rateText,
-        uploaded: count,
-        size: task.file.size,
-        leftTime: rate && left ? left / rate : 0,
-        percentage,
-        file: task.file,
-        raw: task.file.raw,
-    };
-    task.uploadQueue.options?.onProgress?.(
-        percentage,
-        task.file,
-        context,
-    );
+    updateFileProgress(chunk?: UploadChunk) {
+        //上传总大小
+        const count = Math.min(
+            this.file.size,
+            this.uploadedSize,
+        );
+        //剩余上传大小
+        const left = this.file.size - count;
+        const time = performance.now();
+        //时间刻度
+        const rangeTime = time - this.uploadTime;
+        //由于每次调用在chunk上传成功后，因此这段时间的上传大小就是上传的这个chunk的大小
+        const rangeSize = chunk.size;
+        this.uploadedSize = count;
+        //计算出的速率是 x byte/s
+        const rate = rangeSize
+            ? Math.round((1000 * rangeSize) / rangeTime)
+            : 0;
+        //处理成可读的模式
+        const rateText = humanFormat.bytes(rate);
+        //百分比计算
+        const percentage =
+            Math.round((count / this.file.size) * 100) /
+            100;
+        this.file.percentage = percentage;
+        const event: UploadProgressEvent = {
+            rate,
+            rateText,
+            uploaded: count,
+            size: this.file.size,
+            leftTime: rate && left ? left / rate : 0,
+            percentage,
+            file: this.file,
+            raw: this.file.raw,
+        };
+        this.uploadQueue.options?.onProgress?.(
+            percentage,
+            this.file,
+            event,
+        );
+    }
 }

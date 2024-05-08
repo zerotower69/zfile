@@ -4,10 +4,10 @@ import axios, {
     AxiosRequestConfig,
 } from "axios";
 import {
-    ProgressContext,
     RequestLimit,
     UploadActions,
     UploadFile,
+    UploadProgressEvent,
     UploadRawFile,
     UploadStatus,
     WorkerConfig,
@@ -19,10 +19,12 @@ import {
 import { UploadTask } from "./uploadTask";
 import { genFileId } from "../utils";
 import { TaskQueue } from "./TaskQueue";
+import { isObject } from "lodash-es";
 
 const DEFAULT_CHUNK_SIZE = 1024 * 1024;
 
 export interface UploadQueueOptions {
+    base_url?: string;
     actions: UploadActions;
     /**
      * 是否携带cookie,默认false
@@ -60,11 +62,22 @@ export interface UploadQueueOptions {
      * 进度回调
      * @param file 上传文件
      * @param percentage 进度
+     * @param 自定义进度事件
      */
     onProgress?: (
         percentage: number,
         file: UploadFile,
-        context?: ProgressContext,
+        event?: UploadProgressEvent,
+    ) => void;
+    onFileChange?: (
+        file: UploadFile,
+        files: UploadFile[],
+        type: "add" | "remove",
+    ) => void;
+    onStatusChange?: (
+        status: UploadStatus,
+        oldStatus?: UploadStatus,
+        file?: UploadFile,
     ) => void;
 }
 export class UploadQueue {
@@ -75,7 +88,7 @@ export class UploadQueue {
     taskQueue: UploadTask[];
     sliceQueue: TaskQueue;
     uploadingQueue: TaskQueue;
-    private _options: UploadQueueOptions;
+    private readonly _options: UploadQueueOptions;
     constructor(options: UploadQueueOptions) {
         const {
             actions,
@@ -138,6 +151,7 @@ export class UploadQueue {
         task._source = axios.CancelToken.source();
         task._isOpenRetry = openRetry;
         task._retries = retries;
+        task._url = config.url;
         return that.requestQueue.add(upload, task);
     }
 
@@ -158,7 +172,44 @@ export class UploadQueue {
         //添加到任务队列
         this.taskQueue.push(uploadTask);
         //添加到切片任务队列
-        return uploadTask.start();
+        const promise = uploadTask.start();
+        this.options.onFileChange(
+            uploadFile,
+            this.fileQueue,
+            "add",
+        );
+        return {
+            task: uploadTask,
+            file: uploadFile,
+            promise,
+        };
+    }
+
+    remove(file: number | UploadFile) {
+        const id = isObject(file) ? file.uid : file;
+        const index = this.fileQueue.findIndex(
+            (item) => item.uid === id,
+        );
+        if (index > -1) {
+            const uploadFile = this.fileQueue[index];
+            uploadFile.task.stop("移除任务");
+            const taskIndex = this.taskQueue.findIndex(
+                (item) => item.id === uploadFile.task.id,
+            );
+            if (taskIndex > -1) {
+                this.taskQueue.splice(taskIndex, 1);
+            }
+            this.fileQueue.splice(index, 1);
+            setTimeout(() => {
+                this.options?.onFileChange(
+                    uploadFile,
+                    this.fileQueue,
+                    "remove",
+                );
+            }, 0);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -179,6 +230,8 @@ export class UploadQueue {
             total: Math.ceil(file.size / chunkSize),
             raw: rawFile,
             percentage: 0,
+            uploaded: 0,
+            status: UploadStatus.WAITING,
         };
         this.fileQueue.push(uploadFile);
         return uploadFile;
