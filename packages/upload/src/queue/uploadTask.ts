@@ -1,8 +1,9 @@
 import humanFormat from "human-format";
 import {
-    UploadProgressEvent,
+    UploadApiReturn,
     UploadChunk,
     UploadFile,
+    UploadProgressEvent,
     UploadStatus,
     WorkerConfig,
 } from "../interface";
@@ -13,7 +14,11 @@ import {
     getUploadChunkApi,
 } from "../api";
 import { useSliceFile, UseSliceFileReturn } from "../slice";
-import { getError, transformError } from "../utils";
+import {
+    BigFileError,
+    getError,
+    transformError,
+} from "../utils";
 
 let taskId = 1;
 export interface UploadTaskOptions {
@@ -48,7 +53,11 @@ export class UploadTask {
     private _runReject?: (reason?: any) => void;
     private _running: boolean;
     private _uploadTime?: number;
-    private _uploadedSize: number;
+    private _sliced: boolean;
+    //@ts-ignore
+    private _canceled: boolean;
+    //@ts-ignore
+    private isFinished: boolean;
     constructor(options: UploadTaskOptions) {
         const {
             uploadQueue,
@@ -73,16 +82,19 @@ export class UploadTask {
             this.options?.worker?.spark_md5_url,
         );
         this._running = false;
-        this._uploadedSize = 0;
+        this.uploadedSize = 0;
         this._uploadedChunks = [];
+        this._sliced = false;
+        this._canceled = false;
+        this.isFinished = false;
     }
 
     async start() {
         if (this.running) {
             return false;
         }
+        this._canceled = false;
         this.running = true;
-        //TODO:有重试的必要吗
         const p = new Promise<void>((resolve, reject) => {
             this._runResolve = resolve;
             this._runReject = reject;
@@ -90,48 +102,74 @@ export class UploadTask {
         this._runP = p;
         try {
             await this.startSlice();
-        } catch (e) {
-            this._runReject?.(transformError);
+        } catch (error) {
+            this._runReject?.(error);
+            this.status = UploadStatus.FAILED;
+            return this._runP;
         }
         this.status = UploadStatus.READY;
         if (this.running) {
             try {
                 await this.startUpload();
-            } catch (e) {
+                this.status = UploadStatus.SUCCESS;
+                this.isFinished = true;
+                this.uploadQueue.options?.onSuccess(
+                    this.file,
+                );
+                this.running = false;
+            } catch (error) {
                 /* empty */
+                this._runReject?.(error);
             }
         } else {
             //任务停止
-            this._runReject?.("任务停止");
+            this._runResolve?.(false);
         }
-        return p;
+        return this._runP;
     }
 
     /**
      * 开始切片
      */
-    startSlice() {
+    private startSlice() {
         return this.uploadQueue.sliceQueue.add(async () => {
-            if (this.status === UploadStatus.WAITING) {
+            if (!this._sliced) {
                 this.status = UploadStatus.READING;
+                this.uploadQueue.options?.onSliceStart?.(
+                    this.file,
+                    this.files,
+                );
+                // eslint-disable-next-line no-useless-catch
                 try {
                     const data =
                         await this.sliceContext.start();
-                    this.status = UploadStatus.READY;
                     this.file.hash = data.fileHash;
-                    this.chunks = data.fileChunks;
-                    console.log(
-                        "切片成功",
-                        this,
+                    this.file.chunks = data.fileChunks;
+                    this._sliced = true;
+                    this.uploadQueue.options?.onSliceEnd?.(
                         this.file,
+                        this.files,
                     );
-                    return true;
+                    return {
+                        skip: false,
+                        data: data,
+                    };
                 } catch (error) {
                     this.status = UploadStatus.FAILED;
-                    throw error;
+                    this.running = false;
+                    const newError = transformError(error);
+                    this.uploadQueue.options?.onSliceError?.(
+                        newError,
+                        this.file,
+                        this.files,
+                    );
+                    throw newError;
                 }
             } else {
-                return true;
+                return {
+                    skip: true,
+                    data: null,
+                };
             }
         });
     }
@@ -142,69 +180,110 @@ export class UploadTask {
     cancelSlice() {
         this.sliceContext.stop();
     }
-    startUpload() {
+    private startUpload() {
         return this.uploadQueue.uploadingQueue.add(
             async () => {
+                this.uploadQueue.options?.onUploadStart?.(
+                    this.file,
+                    this.files,
+                );
                 if (this.status === UploadStatus.WAITING) {
-                    this._runReject?.(
-                        getError("文件未切片"),
+                    this.running = false;
+                    const error = getError("文件未切片");
+                    this.uploadQueue.options?.onUploadError(
+                        error,
+                        this.file,
+                        this.files,
                     );
-                    return this._runP;
+                    throw error;
                 }
-                this._uploadTime = performance.now();
                 //检查文件上传完成没有
                 const check = await this.checkChunkApi(
                     this.file,
                     this.chunks,
                 );
                 if (check.success) {
-                    //文件秒传
+                    this.status = UploadStatus.MERGING;
+                    //还得调用一次merge
+                    const merge = await this.mergeChunkApi(
+                        this.file,
+                        this.chunks,
+                    );
+                    if (merge.isCancel) {
+                        this._canceled = true;
+                        this.status = UploadStatus.CANCEL;
+                        const error = getError(
+                            "取消操作",
+                            true,
+                        );
+                        this.uploadQueue.options?.onUploadError(
+                            error,
+                            this.file,
+                            this.files,
+                        );
+                        throw error;
+                    }
+                    if (!merge.success) {
+                        const error = transformError(
+                            merge.error,
+                        );
+                        this.uploadQueue.options?.onUploadError(
+                            error,
+                            this.file,
+                            this.files,
+                        );
+                        throw error;
+                    }
                     this.uploadedSize = this.file.size;
                     this.status = UploadStatus.SUCCESS;
-                    this._runResolve?.(check.response);
-                    return this._runP;
-                } else if (check.error) {
-                    //发生错误
-                    if (check.isCancel) {
-                        //取消上传
-                        this.status = UploadStatus.CANCEL;
-                        this._runReject?.(
-                            getError("上传取消"),
-                        );
-                        return this._runP;
-                    }
-                    //未知错误
-                    this.status = UploadStatus.FAILED;
-                    this._runReject?.(
-                        transformError(check.error),
+                } else if (check.isCancel) {
+                    //取消上传
+                    this.running = false;
+                    this._canceled = true;
+                    this.status = UploadStatus.CANCEL;
+                    const error = getError(
+                        "check上传取消",
+                        true,
                     );
-                    return this._runP;
+                    this.uploadQueue.options?.onUploadError(
+                        error,
+                        this.file,
+                        this.files,
+                    );
+                    throw error;
+                } else if (check.error) {
+                    //未知错误
+                    this.running = false;
+                    this.status = UploadStatus.FAILED;
+                    const error = transformError(
+                        check.error,
+                    );
+                    this.uploadQueue.options?.onUploadError(
+                        error,
+                        this.file,
+                        this.files,
+                    );
+                    throw error;
                 }
                 const waitingChunks = check.chunks!;
                 if (check.uploadedChunks) {
                     this.uploadedChunks =
                         check.uploadedChunks;
                 }
-                const uploads =
+                this._uploadTime = performance.now();
+                try {
                     await this.uploadChunks(waitingChunks);
-                const hasCancel = uploads.some(
-                    (upload) => upload.isCancel,
-                );
-                if (hasCancel) {
-                    //取消上传
-                    this.status = UploadStatus.CANCEL;
-                    this._runReject?.(getError("上传取消"));
-                    return this._runP;
-                }
-                //TODO:一定要确定全部完成？
-                const allSuccess = uploads.every(
-                    (upload) => upload.success,
-                );
-                if (!allSuccess) {
-                    //上传分片发生错误
+                } catch (error) {
+                    this.running = false;
                     this.status = UploadStatus.FAILED;
-                    this._runReject?.(getError("上传取消"));
-                    return this._runP;
+                    setTimeout(() => {
+                        this.uploadQueue.options?.onUploadError(
+                            error as BigFileError,
+                            this.file,
+                            this.files,
+                        );
+                    }, 0);
+                    throw error;
                 }
                 const checkAgain = await this.checkChunkApi(
                     this.file,
@@ -212,17 +291,30 @@ export class UploadTask {
                 );
                 if (checkAgain.isCancel) {
                     //取消上传
+                    this._canceled = true;
                     this.status = UploadStatus.CANCEL;
-                    this._runReject?.(getError("上传取消"));
-                    return this._runP;
-                }
-                if (checkAgain.error) {
+                    const error = getError(
+                        "上传取消",
+                        true,
+                    );
+                    this.uploadQueue.options?.onUploadError(
+                        error as BigFileError,
+                        this.file,
+                        this.files,
+                    );
+                    throw error;
+                } else if (checkAgain.error) {
                     //检查接口错误
                     this.status = UploadStatus.FAILED;
-                    this._runReject?.(
-                        getError("检查分片接口错误"),
+                    this.running = false;
+                    const error =
+                        getError("检查分片接口错误");
+                    this.uploadQueue.options?.onUploadError(
+                        error as BigFileError,
+                        this.file,
+                        this.files,
                     );
-                    return this._runP;
+                    throw error;
                 }
                 if (
                     !checkAgain.success ||
@@ -230,10 +322,16 @@ export class UploadTask {
                 ) {
                     //未知错误
                     this.status = UploadStatus.FAILED;
-                    this._runReject?.(getError("发生错误"));
-                    return this._runP;
+                    this.running = false;
+                    const error = getError("发生错误");
+                    this.uploadQueue.options?.onUploadError(
+                        error as BigFileError,
+                        this.file,
+                        this.files,
+                    );
+                    throw error;
                 }
-                // this.uploadedSize = (checkAgain?.uploadedChunks ?? []).reduce((acc, cur) => acc + cur.size, 0);
+                this.status = UploadStatus.MERGING;
                 //开始合并
                 const mergeChunks =
                     await this.mergeChunkApi(
@@ -243,26 +341,45 @@ export class UploadTask {
                 if (mergeChunks.isCancel) {
                     //取消上传
                     this.status = UploadStatus.CANCEL;
-                    this._runReject?.(getError("上传取消"));
-                    return this._runP;
+                    this.running = false;
+                    const error = getError(
+                        "上传取消",
+                        true,
+                    );
+                    this.uploadQueue.options?.onUploadError(
+                        error as BigFileError,
+                        this.file,
+                        this.files,
+                    );
+                    throw error;
                 }
                 if (mergeChunks.error) {
                     //合并接口错误
                     this.status = UploadStatus.FAILED;
-                    this._runReject?.(
-                        getError("检查分片接口错误"),
+                    this.running = false;
+                    const error = transformError(
+                        mergeChunks.error,
                     );
-                    return this._runP;
+                    this.uploadQueue.options?.onUploadError(
+                        error as BigFileError,
+                        this.file,
+                        this.files,
+                    );
+                    throw error;
                 }
                 if (!mergeChunks.success) {
                     //未知错误
                     this.status = UploadStatus.FAILED;
-                    this._runReject?.(getError("发生错误"));
-                    return this._runP;
+                    this.running = false;
+                    const error = getError("发生错误");
+                    this.uploadQueue.options?.onUploadError(
+                        error as BigFileError,
+                        this.file,
+                        this.files,
+                    );
+                    throw error;
                 }
                 this.status = UploadStatus.SUCCESS;
-                this._runResolve?.(mergeChunks.response);
-                return this._runP;
             },
         );
     }
@@ -315,6 +432,10 @@ export class UploadTask {
     get status() {
         return this.file.status;
     }
+
+    private get files() {
+        return this.uploadQueue.fileQueue;
+    }
     /**
      * 改变当前上传任务状态
      * @param status
@@ -347,13 +468,9 @@ export class UploadTask {
 
     set uploadedChunks(list) {
         this._uploadedChunks = list;
-        this._uploadedSize = list.reduce(
+        this.uploadedSize = list.reduce(
             (acc, current) => acc + current.size,
             0,
-        );
-        console.log(
-            this._uploadedChunks,
-            this._uploadedSize,
         );
     }
 
@@ -393,7 +510,7 @@ export class UploadTask {
     uploadChunks(chunks: UploadChunk[]) {
         this.status = UploadStatus.UPLOADING;
         let currentIndex = 0;
-        const tasks = [];
+        const tasks: UploadApiReturn[] = [];
         this.uploadTime = performance.now();
         while (currentIndex < chunks.length) {
             const chunk = chunks[currentIndex];
@@ -405,6 +522,9 @@ export class UploadTask {
                 if (resp.success) {
                     this.uploadedChunks.push(chunk);
                     this.updateFileProgress(chunk);
+                }
+                if (resp.error) {
+                    throw resp.error;
                 }
                 return resp;
             });

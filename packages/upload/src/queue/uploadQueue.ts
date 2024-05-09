@@ -17,14 +17,13 @@ import {
     UploadRequestQueue,
 } from "./uploadRequestQueue";
 import { UploadTask } from "./uploadTask";
-import { genFileId } from "../utils";
+import { BigFileError, genFileId } from "../utils";
 import { TaskQueue } from "./TaskQueue";
 import { isObject } from "lodash-es";
 
 const DEFAULT_CHUNK_SIZE = 1024 * 1024;
 
 export interface UploadQueueOptions {
-    base_url?: string;
     actions: UploadActions;
     /**
      * 是否携带cookie,默认false
@@ -69,15 +68,96 @@ export interface UploadQueueOptions {
         file: UploadFile,
         event?: UploadProgressEvent,
     ) => void;
+    /**
+     * 文件变化，当增加或者移除时
+     * @param file
+     * @param files
+     * @param type
+     */
     onFileChange?: (
         file: UploadFile,
         files: UploadFile[],
         type: "add" | "remove",
     ) => void;
+    /**
+     * 文件上传成功时
+     * @param file
+     */
+    onSuccess?: (file: UploadFile) => void;
+    /**
+     * 上传文件状态变化时
+     * @param status
+     * @param oldStatus
+     * @param file
+     */
     onStatusChange?: (
         status: UploadStatus,
         oldStatus?: UploadStatus,
         file?: UploadFile,
+    ) => void;
+    /**
+     *开始切片
+     * @param file
+     * @param files
+     */
+    onSliceStart?: (
+        file: UploadFile,
+        files?: UploadFile[],
+    ) => void;
+    /**
+     * 切片结束
+     * @param file
+     * @param files
+     */
+    onSliceEnd?: (
+        file: UploadFile,
+        files?: UploadFile[],
+    ) => void;
+    onSliceError?: (
+        error: BigFileError,
+        file: UploadFile,
+        files?: UploadFile[],
+    ) => void;
+    /**
+     * 开始上传触发的回调
+     * @param file
+     * @param files
+     */
+    onUploadStart?: (
+        file: UploadFile,
+        files?: UploadFile[],
+    ) => void;
+    /**
+     * 上传时发生的错误
+     * @param error
+     * @param file
+     * @param files
+     */
+    onUploadError?: (
+        error: BigFileError,
+        file?: UploadFile,
+        files?: UploadFile[],
+    ) => void;
+    /**
+     * 网络中断时触发
+     * @param files
+     */
+    onOffline?: (files: UploadFile[]) => void;
+    /**
+     *网络恢复时触发
+     * @param files
+     */
+    onLine?: (files: UploadFile[]) => void;
+    /**
+     * 上传取消时触发
+     * @param message 取消理由
+     * @param file
+     * @param files
+     */
+    onCancel?: (
+        message: string,
+        file: UploadFile,
+        files?: UploadFile[],
     ) => void;
 }
 export class UploadQueue {
@@ -89,6 +169,7 @@ export class UploadQueue {
     sliceQueue: TaskQueue;
     uploadingQueue: TaskQueue;
     private readonly _options: UploadQueueOptions;
+    isOffline: boolean;
     constructor(options: UploadQueueOptions) {
         const {
             actions,
@@ -125,6 +206,9 @@ export class UploadQueue {
             parallel,
             requestLimit,
         });
+        this.isOffline = window.navigator.onLine;
+        window.addEventListener("offline", this.offline);
+        window.addEventListener("online", this.online);
     }
 
     /**
@@ -240,5 +324,20 @@ export class UploadQueue {
     //这样的目的是防止外部修改options的值，但又保证配置可读取
     get options() {
         return this._options;
+    }
+    private offline() {
+        this.isOffline = true;
+        this.options?.onOffline?.(this.fileQueue);
+    }
+    private online() {
+        this.isOffline = false;
+        //重启断网后终止的任务
+        const offlineTasks = this.taskQueue.filter(
+            (task) => task.status === UploadStatus.OFFLINE,
+        );
+        offlineTasks.forEach((task) => {
+            task.start();
+        });
+        this.options?.onLine?.(this.fileQueue);
     }
 }

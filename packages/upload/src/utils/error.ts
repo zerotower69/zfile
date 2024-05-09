@@ -1,9 +1,11 @@
 import { isString } from "./is";
 
-class BigFileError extends Error {
-    constructor(m: string) {
+export class BigFileError extends Error {
+    isCancel: boolean;
+    constructor(m: string, isCancel = false) {
         super(m);
         this.name = "BigFileUploadError";
+        this.isCancel = isCancel;
     }
 }
 
@@ -38,6 +40,9 @@ export function transformError(e?: any, prefix?: string) {
     );
 }
 
-export function getError(message: string) {
-    return new BigFileError(`${message}`);
+export function getError(
+    message: string,
+    isCancel = false,
+) {
+    return new BigFileError(`${message}`, isCancel);
 }

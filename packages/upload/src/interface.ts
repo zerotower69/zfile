@@ -57,6 +57,7 @@ export enum UploadStatus {
     FAILED = "failed",
     CANCEL = "cancel",
     OFFLINE = "offline",
+    MERGING = "merging",
     SUCCESS = "success",
 }
 
