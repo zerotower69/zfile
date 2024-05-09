@@ -14,10 +14,20 @@
     </div>
     <div class="z-upload-list-table">
       <vxe-table :data="props.files">
-        <vxe-column title="文件名" min-width="300"></vxe-column>
-        <vxe-column title="大小" width="100"></vxe-column>
-        <vxe-column title="状态" width="150"></vxe-column>
-        <vxe-column title="操作" min-width="150"></vxe-column>
+        <vxe-column title="文件名" field="name" min-width="300"></vxe-column>
+        <vxe-column title="大小" field="size" width="100"></vxe-column>
+        <vxe-column title="状态" width="150">
+          <template #default="{ row }">
+            <Progress :percent="getPercentage(row)" />
+          </template>
+        </vxe-column>
+        <vxe-column title="操作" min-width="150">
+          <template #default="{ row }">
+            <div class="flex gap-4">
+              <div class="inline-block text-[20px] text-orange i-custom-pause"></div>
+            </div>
+          </template>
+        </vxe-column>
         <template #empty>
           <div>暂无文件</div>
         </template>
@@ -48,6 +58,11 @@ function handleFileChange(evt: Event) {
   if (!fileList.length) return
   const files = [...fileList]
   emits('upload', files)
+}
+
+function getPercentage(row: UploadFile) {
+  console.log(row.percentage)
+  return (row.percentage || 0) * 100
 }
 </script>
 

@@ -1,7 +1,5 @@
 <template>
-  <div>
-    <UploadList />
-  </div>
+  <UploadList />
 </template>
 <script setup lang="ts">
 import UploadList from '@/components/UploadList/index.vue'

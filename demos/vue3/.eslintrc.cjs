@@ -16,6 +16,7 @@ module.exports = {
     'vue/multi-word-component-names':'off',
     'vue/no-reserved-component-names':"off",
     "@typescript-eslint/no-unused-vars":"off",
-    "no-unused-vars":"off"
+    "no-unused-vars":"off",
+    'vue/no-unused-vars':"off"
   }
 }
