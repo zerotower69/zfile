@@ -1,3 +1,5 @@
+import humanFormat from "human-format";
+
 let fileId = 1;
 let chunkId = 2;
 
@@ -23,3 +25,7 @@ export const normalizeUrl = (
     if (!baseURL || /^http(s)*/.test(url)) return url;
     return baseURL + url;
 };
+
+export function formatSize(size: number) {
+    return humanFormat(size);
+}

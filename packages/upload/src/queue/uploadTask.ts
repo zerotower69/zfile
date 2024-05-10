@@ -58,6 +58,8 @@ export class UploadTask {
     private _canceled: boolean;
     //@ts-ignore
     private isFinished: boolean;
+    rate: string;
+    leftTime: number;
     constructor(options: UploadTaskOptions) {
         const {
             uploadQueue,
@@ -87,6 +89,7 @@ export class UploadTask {
         this._sliced = false;
         this._canceled = false;
         this.isFinished = false;
+        this.rate = "";
     }
 
     async start() {
@@ -113,11 +116,11 @@ export class UploadTask {
                 await this.startUpload();
                 this.status = UploadStatus.SUCCESS;
                 this.isFinished = true;
+                this.file.uploaded = this.file.size;
+                this.file.percentage = 1;
                 this.uploadQueue.options?.onSuccess(
                     this.file,
                 );
-                this.file.uploaded = this.file.size;
-                this.file.percentage = 1;
                 this.running = false;
                 this._runResolve?.(true);
             } catch (error) {
@@ -126,6 +129,7 @@ export class UploadTask {
             }
         } else {
             //任务停止
+            this.running = false;
             this._runResolve?.(false);
         }
         return this._runP;
@@ -180,7 +184,7 @@ export class UploadTask {
     /**
      * 取消切片
      */
-    cancelSlice() {
+    private cancelSlice() {
         this.sliceContext.stop();
     }
     private startUpload() {
@@ -391,7 +395,7 @@ export class UploadTask {
     /**
      * 取消上传
      */
-    cancelUpload(message = "手动取消") {
+    private cancelUpload(message = "手动取消") {
         this.uploadQueue.requestQueue.cancelUpload(
             this,
             message,
@@ -406,6 +410,11 @@ export class UploadTask {
         this.cancelSlice();
         this.cancelUpload(message);
         this.running = false;
+    }
+
+    destroy() {
+        this.stop("销毁");
+        this.uploadQueue.remove(this.file);
     }
 
     set running(val) {
@@ -557,6 +566,9 @@ export class UploadTask {
             : 0;
         //处理成可读的模式
         const rateText = humanFormat.bytes(rate);
+        this.rate = rateText;
+        const leftTime = rate && left ? left / rate : 0;
+        this.leftTime = leftTime;
         //百分比计算
         const percentage =
             Math.round((count / this.file.size) * 100) /
@@ -567,7 +579,7 @@ export class UploadTask {
             rateText,
             uploaded: count,
             size: this.file.size,
-            leftTime: rate && left ? left / rate : 0,
+            leftTime: leftTime,
             percentage,
             file: this.file,
             raw: this.file.raw,

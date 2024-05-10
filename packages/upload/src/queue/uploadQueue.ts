@@ -136,8 +136,8 @@ export interface UploadQueueOptions {
      */
     onUploadError?: (
         error: BigFileError,
-        file?: UploadFile,
-        files?: UploadFile[],
+        file: UploadFile,
+        files: UploadFile[],
     ) => void;
     /**
      * 网络中断时触发
