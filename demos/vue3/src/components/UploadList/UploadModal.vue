@@ -15,7 +15,7 @@
     <div class="z-upload-list-table">
       <vxe-table :data="props.files">
         <vxe-column title="文件名" field="name" min-width="300"></vxe-column>
-        <vxe-column title="大小" field="size" width="100"></vxe-column>
+        <vxe-column title="大小" field="humanSize" width="100"></vxe-column>
         <vxe-column title="状态" width="150">
           <template #default="{ row }">
             <Progress :percent="getPercentage(row)" />

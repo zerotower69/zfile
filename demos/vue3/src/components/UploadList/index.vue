@@ -15,15 +15,38 @@ const { upload } = useFileUpload({
     baseURL: 'http://localhost:3000',
     check: {
       action: '/check',
-      method: 'post'
+      method: 'post',
+      transformData(file) {
+        return {
+          fileHash: file.hash
+        }
+      }
     },
     upload: {
       action: '/upload',
-      method: 'post'
+      method: 'post',
+      transformData(chunk, file) {
+        const formData = new FormData()
+        formData.append('total', `${file.total}`)
+        formData.append('chunkNumber', `${chunk.index}`)
+        formData.append('chunkSize', `${chunk.size}`)
+        formData.append('fileName', `${file.name}`)
+        formData.append('fileSize', `${file.size}`)
+        formData.append('fileHash', `${file.hash}`)
+        formData.append('chunkHash', `${chunk.hash}`)
+        return formData
+      }
     },
     merge: {
       action: '/merge',
-      method: 'post'
+      method: 'post',
+      transformData(file, chunks) {
+        return {
+          total: file.total,
+          md5: file.hash,
+          fileName: file.name
+        }
+      }
     }
   },
   onFileChange(file, files, type) {
