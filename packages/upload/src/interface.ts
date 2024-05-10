@@ -9,6 +9,7 @@ import { UploadTask } from "./queue/uploadTask";
 export interface UploadFile {
     name: string;
     size: number;
+    humanSize: string;
     uid: number;
     raw: UploadRawFile;
     chunkSize: number;
@@ -136,9 +137,9 @@ export interface CheckAction {
      * 响应成功处理，结合业务需要转换
      */
     transformResponse?: (
-        response?: AxiosResponse,
-        chunks?: UploadChunk[],
-        file?: UploadFile,
+        response: AxiosResponse,
+        chunks: UploadChunk[],
+        file: UploadFile,
     ) => CheckApiReturn;
     /**
      * 响应错误处理
@@ -146,8 +147,8 @@ export interface CheckAction {
      * @param isCancel 接口是否手动取消
      */
     transformError?: (
-        error?: any,
-        isCancel?: boolean,
+        error: any,
+        isCancel: boolean,
     ) => CheckApiReturn;
     /**
      * 接口响应超时
@@ -177,8 +178,8 @@ export interface UploadAction {
      * @param file 上传文件对象，可取出其它信息
      */
     transformParams?: (
-        chunk?: UploadChunk,
-        file?: UploadFile,
+        chunk: UploadChunk,
+        file: UploadFile,
     ) => Record<string, any>;
     /**
      * body请求信息，结合实际业务需要指定
@@ -186,16 +187,16 @@ export interface UploadAction {
      * @param file 上传文件对象，UploadFile
      */
     transformData?: (
-        chunk?: UploadChunk,
-        file?: UploadFile,
+        chunk: UploadChunk,
+        file: UploadFile,
     ) => FormData;
     /**
      * 响应成功处理，结合业务需要转换
      */
     transformResponse?: (
         response: AxiosResponse,
-        chunk?: UploadChunk,
-        file?: UploadFile,
+        chunk: UploadChunk,
+        file: UploadFile,
     ) => UploadApiReturn;
     /**
      * 响应错误处理
@@ -203,8 +204,8 @@ export interface UploadAction {
      * @param isCancel 接口是否手动取消
      */
     transformError?: (
-        error?: any,
-        isCancel?: boolean,
+        error: any,
+        isCancel: boolean,
     ) => UploadApiReturn;
     /**
      * 接口响应超时
@@ -222,8 +223,8 @@ export interface UploadAction {
      */
     onProgress?: (
         percentage: number,
-        chunk?: UploadChunk,
-        evt?: AxiosProgressEvent,
+        chunk: UploadChunk,
+        evt: AxiosProgressEvent,
     ) => void;
 }
 
@@ -244,7 +245,7 @@ export interface MergeAction {
      */
     transformPrams?: (
         file: UploadFile,
-        chunks?: UploadChunk[],
+        chunks: UploadChunk[],
     ) => Record<string, any>;
     /**
      * body 请求信息，根据业务需要给定
@@ -253,15 +254,15 @@ export interface MergeAction {
      */
     transformData?: (
         file: UploadFile,
-        chunks?: UploadChunk[],
+        chunks: UploadChunk[],
     ) => FormData | Record<string, any>;
     /**
      * 响应成功处理
      */
     transformResponse?: (
         response: AxiosResponse,
-        file?: UploadFile,
-        chunks?: UploadChunk[],
+        file: UploadFile,
+        chunks: UploadChunk[],
     ) => MergeApiReturn;
     /**
      * 响应失败处理
@@ -269,8 +270,8 @@ export interface MergeAction {
      * @param isCancel 接口是否手动取消
      */
     transformError?: (
-        error?: any,
-        isCancel?: boolean,
+        error: any,
+        isCancel: boolean,
     ) => MergeApiReturn;
     /**
      * 接口响应超时

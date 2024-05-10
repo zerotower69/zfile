@@ -20,6 +20,7 @@ import { UploadTask } from "./uploadTask";
 import { BigFileError, genFileId } from "../utils";
 import { TaskQueue } from "./TaskQueue";
 import { isObject } from "lodash-es";
+import humanFormat from "human-format";
 
 const DEFAULT_CHUNK_SIZE = 1024 * 1024;
 
@@ -310,6 +311,7 @@ export class UploadQueue {
             uid,
             name: file.name,
             size: file.size,
+            humanSize: humanFormat(file.size),
             chunkSize,
             total: Math.ceil(file.size / chunkSize),
             raw: rawFile,
@@ -317,6 +319,11 @@ export class UploadQueue {
             uploaded: 0,
             status: UploadStatus.WAITING,
         };
+        Object.defineProperty(uploadFile, "humanSize", {
+            get() {
+                return humanFormat(uploadFile.size);
+            },
+        });
         this.fileQueue.push(uploadFile);
         return uploadFile;
     }

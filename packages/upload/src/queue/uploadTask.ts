@@ -116,7 +116,10 @@ export class UploadTask {
                 this.uploadQueue.options?.onSuccess(
                     this.file,
                 );
+                this.file.uploaded = this.file.size;
+                this.file.percentage = 1;
                 this.running = false;
+                this._runResolve?.(true);
             } catch (error) {
                 /* empty */
                 this._runReject?.(error);
@@ -190,7 +193,7 @@ export class UploadTask {
                 if (this.status === UploadStatus.WAITING) {
                     this.running = false;
                     const error = getError("文件未切片");
-                    this.uploadQueue.options?.onUploadError(
+                    this.uploadQueue.options?.onUploadError?.(
                         error,
                         this.file,
                         this.files,
@@ -216,7 +219,7 @@ export class UploadTask {
                             "取消操作",
                             true,
                         );
-                        this.uploadQueue.options?.onUploadError(
+                        this.uploadQueue.options?.onUploadError?.(
                             error,
                             this.file,
                             this.files,
@@ -227,7 +230,7 @@ export class UploadTask {
                         const error = transformError(
                             merge.error,
                         );
-                        this.uploadQueue.options?.onUploadError(
+                        this.uploadQueue.options?.onUploadError?.(
                             error,
                             this.file,
                             this.files,
@@ -236,6 +239,7 @@ export class UploadTask {
                     }
                     this.uploadedSize = this.file.size;
                     this.status = UploadStatus.SUCCESS;
+                    return;
                 } else if (check.isCancel) {
                     //取消上传
                     this.running = false;
@@ -245,7 +249,7 @@ export class UploadTask {
                         "check上传取消",
                         true,
                     );
-                    this.uploadQueue.options?.onUploadError(
+                    this.uploadQueue.options?.onUploadError?.(
                         error,
                         this.file,
                         this.files,
@@ -258,7 +262,7 @@ export class UploadTask {
                     const error = transformError(
                         check.error,
                     );
-                    this.uploadQueue.options?.onUploadError(
+                    this.uploadQueue.options?.onUploadError?.(
                         error,
                         this.file,
                         this.files,
@@ -277,7 +281,7 @@ export class UploadTask {
                     this.running = false;
                     this.status = UploadStatus.FAILED;
                     setTimeout(() => {
-                        this.uploadQueue.options?.onUploadError(
+                        this.uploadQueue.options?.onUploadError?.(
                             error as BigFileError,
                             this.file,
                             this.files,
@@ -297,7 +301,7 @@ export class UploadTask {
                         "上传取消",
                         true,
                     );
-                    this.uploadQueue.options?.onUploadError(
+                    this.uploadQueue.options?.onUploadError?.(
                         error as BigFileError,
                         this.file,
                         this.files,
@@ -309,7 +313,7 @@ export class UploadTask {
                     this.running = false;
                     const error =
                         getError("检查分片接口错误");
-                    this.uploadQueue.options?.onUploadError(
+                    this.uploadQueue.options?.onUploadError?.(
                         error as BigFileError,
                         this.file,
                         this.files,
@@ -324,7 +328,7 @@ export class UploadTask {
                     this.status = UploadStatus.FAILED;
                     this.running = false;
                     const error = getError("发生错误");
-                    this.uploadQueue.options?.onUploadError(
+                    this.uploadQueue.options?.onUploadError?.(
                         error as BigFileError,
                         this.file,
                         this.files,
@@ -346,7 +350,7 @@ export class UploadTask {
                         "上传取消",
                         true,
                     );
-                    this.uploadQueue.options?.onUploadError(
+                    this.uploadQueue.options?.onUploadError?.(
                         error as BigFileError,
                         this.file,
                         this.files,
@@ -360,7 +364,7 @@ export class UploadTask {
                     const error = transformError(
                         mergeChunks.error,
                     );
-                    this.uploadQueue.options?.onUploadError(
+                    this.uploadQueue.options?.onUploadError?.(
                         error as BigFileError,
                         this.file,
                         this.files,
@@ -372,7 +376,7 @@ export class UploadTask {
                     this.status = UploadStatus.FAILED;
                     this.running = false;
                     const error = getError("发生错误");
-                    this.uploadQueue.options?.onUploadError(
+                    this.uploadQueue.options?.onUploadError?.(
                         error as BigFileError,
                         this.file,
                         this.files,
