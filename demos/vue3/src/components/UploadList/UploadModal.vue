@@ -3,9 +3,24 @@
     <div class="z-upload-list-header flex flex-col mb-4">
       <div class="z-upload-list-top-button-group flex justify-between">
         <div class="flex gap-4">
-          <vxe-button>全部暂停</vxe-button>
-          <vxe-button>全部开始</vxe-button>
-          <vxe-button>全部删除</vxe-button>
+          <vxe-button class="operate-button">
+            <div class="f-c-c gap-2">
+              <span class="inline-block cursor-pointer text-[18px] i-custom:pause"></span>
+              <span>全部暂停</span>
+            </div>
+          </vxe-button>
+          <vxe-button class="operate-button">
+            <div class="f-c-c gap-2">
+              <span class="inline-block cursor-pointer text-[18px] i-custom:run"></span>
+              <span>全部开始</span>
+            </div>
+          </vxe-button>
+          <vxe-button class="operate-button"
+            ><div class="f-c-c gap-2">
+              <span class="inline-block cursor-pointer text-[18px] i-custom:delete"></span>
+              <span>全部删除</span>
+            </div></vxe-button
+          >
         </div>
         <div>
           <vxe-button status="primary" @click="handleUpload">上传文件</vxe-button>
@@ -15,16 +30,33 @@
     <div class="z-upload-list-table">
       <vxe-table :data="props.files">
         <vxe-column title="文件名" field="name" min-width="300"></vxe-column>
-        <vxe-column title="大小" field="humanSize" width="100"></vxe-column>
-        <vxe-column title="状态" width="150">
+        <vxe-column title="大小" field="humanSize" width="180">
           <template #default="{ row }">
-            <Progress :percent="getPercentage(row)" />
+            {{ getSize(row) }}
+          </template>
+        </vxe-column>
+        <vxe-column title="状态" width="220" align="center">
+          <template #default="{ row }">
+            <RowStatus :row="row" />
           </template>
         </vxe-column>
         <vxe-column title="操作" min-width="150">
           <template #default="{ row }">
             <div class="flex gap-4">
-              <div class="inline-block text-[20px] text-orange i-custom-pause"></div>
+              <div
+                v-if="rowPauseVisible(row)"
+                @click="handleRowPause(row)"
+                class="inline-block cursor-pointer text-[20px] text-gray hover:text-gray-5 i-custom:pause"
+              ></div>
+              <div
+                v-if="rowRunVisible(row)"
+                @click="handleRowRun(row)"
+                class="inline-block cursor-pointer text-[20px] text-gray hover:text-gray-5 i-custom:run"
+              ></div>
+              <div
+                class="inline-block cursor-pointer text-[20px] text-gray hover:text-gray-5 i-custom:delete"
+                @click="handleRowDelete(row)"
+              ></div>
             </div>
           </template>
         </vxe-column>
@@ -39,6 +71,9 @@
 <script setup lang="ts">
 import { type PropType, ref } from 'vue'
 import type { UploadFile } from '@zfile/upload/dist/interface'
+import { formatSize } from '@zfile/upload'
+import { VXETable, modal } from 'vxe-table'
+import RowStatus from '@/components/UploadList/RowStatus'
 
 const props = defineProps({
   files: {
@@ -48,7 +83,7 @@ const props = defineProps({
 })
 
 const inputRef = ref<HTMLInputElement | null>(null)
-const emits = defineEmits(['upload'])
+const emits = defineEmits(['upload', 'delete-row'])
 
 function handleUpload() {
   inputRef.value?.click()
@@ -61,9 +96,39 @@ function handleFileChange(evt: Event) {
 }
 
 function getPercentage(row: UploadFile) {
-  console.log(row.percentage)
   return (row.percentage || 0) * 100
+}
+function rowPauseVisible(row: UploadFile) {
+  return row.status !== 'success' && row.task!.running
+}
+
+function rowRunVisible(row: UploadFile) {
+  return row.status !== 'success' && !row.task!.running
+}
+
+function getSize(row: UploadFile) {
+  return `${formatSize(row.uploaded)}/${formatSize(row.size)}`
+}
+
+async function handleRowDelete(row: UploadFile) {
+  const type = await modal.confirm('确认删除吗？')
+  emits('delete-row', row)
+  row.task!.destroy()
+}
+function handleRowRun(row: UploadFile) {
+  row.task!.start()
+}
+
+function handleRowPause(row: UploadFile) {
+  row.task!.stop('用户暂停')
 }
 </script>
 
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+.operate-button {
+  color: black !important;
+  &:hover {
+    color: gray !important;
+  }
+}
+</style>

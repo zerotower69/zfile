@@ -7,6 +7,7 @@ import { ref, unref } from 'vue'
 import DragBall from '@/components/UploadList/DragBall.vue'
 import { useFileUpload } from '@zfile/upload'
 import type { UploadFile } from '@zfile/upload/dist/interface'
+import { modal } from 'vxe-table'
 
 const fileList = ref<UploadFile[]>([])
 
@@ -50,19 +51,38 @@ const { upload } = useFileUpload({
     }
   },
   onFileChange(file, files, type) {
-    fileList.value = [...files]
+    if (type === 'add') {
+      fileList.value.push(file)
+    } else {
+      removeFile(file)
+    }
   },
   onProgress(percentage, file, event) {
     updateFile(file)
   },
   onSuccess(file) {
     updateFile(file)
+    modal.message(`[${file.name}]上传成功`, {
+      status: 'success'
+    })
   },
   onSliceEnd(file, files) {
-    console.log('切片成功')
+    updateFile(file)
+    modal.message(`[${file.name}]切片成功`, {
+      status: 'success'
+    })
   },
   onSliceError(error, file, files) {
-    console.error('切片失败', error)
+    updateFile(file)
+    modal.message(`[${file.name}]切片失败`, {
+      status: 'error'
+    })
+  },
+  onUploadError(error, file, files) {
+    updateFile(file)
+    modal.message(`[${file.name}]${error.message}`, {
+      status: 'error'
+    })
   }
 })
 
@@ -70,14 +90,22 @@ function updateFile(file: UploadFile) {
   const list = unref(fileList)
   const index = list.findIndex((item) => (item.uid = file.uid))
   if (index > -1) {
-    list[index] = file
+    list[index] = { ...file }
     fileList.value = [...list]
+  }
+}
+
+function removeFile(file: UploadFile) {
+  const list = unref(fileList)
+  const index = list.findIndex((item) => (item.uid = file.uid))
+  if (index > -1) {
+    fileList.value.splice(index, 1)
   }
 }
 
 function handleUpload(files: File[]) {
   files.forEach((file) => {
-    upload(file)
+    const { file: uploadFIle } = upload(file)
   })
 }
 </script>

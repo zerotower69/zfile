@@ -1,10 +1,13 @@
 // uno.config.ts
-import { defineConfig, presetIcons, presetAttributify, presetUno } from 'unocss'
+import { defineConfig, presetAttributify, presetUno, presetIcons } from 'unocss'
 // loader helpers
 import { FileSystemIconLoader } from '@iconify/utils/lib/loader/node-loaders'
 
 //@ts-ignore
 export default defineConfig({
+  shortcuts: {
+    'f-c-c': 'flex justify-center items-center'
+  },
   presets: [
     presetAttributify({
       /* preset options */
@@ -12,7 +15,10 @@ export default defineConfig({
     presetUno(),
     presetIcons({
       collections: {
-        custom: FileSystemIconLoader('./assets/icons', (svg) => svg.replace(/#fff/, 'currentColor'))
+        carbon: () => import('@iconify-json/carbon/icons.json').then((i) => i.default),
+        custom: FileSystemIconLoader('./src/assets/icons', (svg) =>
+          svg.replace(/#fff/, 'currentColor')
+        )
       }
     })
   ]

@@ -20,7 +20,7 @@ export default defineConfig({
     vue(),
     vueJsx(),
     VueDevTools(),
-    Unocss({}),
+    Unocss(),
     Components({
       resolvers: [VxeTableResolver()]
     }),

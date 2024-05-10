@@ -10,6 +10,7 @@ declare module 'vue' {
     Button: typeof import('./src/components/UploadList/Button.vue')['default']
     DragBall: typeof import('./src/components/UploadList/DragBall.vue')['default']
     Progress: typeof import('./src/components/UploadList/Progress.vue')['default']
+    RowStatus: typeof import('./src/components/UploadList/RowStatus.vue')['default']
     UploadList: typeof import('./src/components/UploadList/index.vue')['default']
     UploadModal: typeof import('./src/components/UploadList/UploadModal.vue')['default']
     VxeButton: typeof import('vxe-table/es/button/index.js')['VxeButton']

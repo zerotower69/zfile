@@ -20,11 +20,13 @@
     "xe-utils": "^3.5.26"
   },
   "devDependencies": {
+    "@iconify-json/carbon": "^1.1.32",
     "@iconify/utils": "^2.1.23",
     "@rushstack/eslint-patch": "^1.8.0",
     "@tsconfig/node20": "^20.1.4",
     "@types/jsdom": "^21.1.6",
     "@types/node": "^20.12.5",
+    "@unocss/preset-icons": "^0.60.0",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vitejs/plugin-vue-jsx": "^3.1.0",
     "@vue/eslint-config-prettier": "^9.0.0",

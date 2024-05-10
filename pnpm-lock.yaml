@@ -176,6 +176,9 @@ importers:
         specifier: ^3.5.26
         version: 3.5.26
     devDependencies:
+      '@iconify-json/carbon':
+        specifier: ^1.1.32
+        version: 1.1.32
       '@iconify/utils':
         specifier: ^2.1.23
         version: 2.1.23
@@ -191,6 +194,9 @@ importers:
       '@types/node':
         specifier: ^20.12.5
         version: 20.12.8
+      '@unocss/preset-icons':
+        specifier: ^0.60.0
+        version: 0.60.0
       '@vitejs/plugin-vue':
         specifier: ^5.0.4
         version: 5.0.4(vite@5.2.10)(vue@3.4.26)
@@ -2050,6 +2056,12 @@ packages:
     resolution: {integrity: sha512-93zYdMES/c1D69yZiKDBj0V24vqNzB/koF26KPaagAfd3P/4gUlh3Dys5ogAK+Exi9QyzlD8x/08Zt7wIKcDcA==}
     dev: true
 
+  /@iconify-json/carbon@1.1.32:
+    resolution: {integrity: sha512-9X8wVI7AmcnjTyOdDoCgyNwcFL9lb++nacDS2yLANTc27F4y9Q8pJIfUVsakR4KcGqSSBCyXwEmBDeopeTZFqA==}
+    dependencies:
+      '@iconify/types': 2.0.0
+    dev: true
+
   /@iconify/types@2.0.0:
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
     dev: true
@@ -3859,6 +3871,10 @@ packages:
     resolution: {integrity: sha512-bBZ1sgcAtezQVZ1BST9IS3jqcsTLyqKNjiIf7FTnX3DHpfpYuMDFzSOtmkZDzBleOLO/CtcRWjT0HwTSQAmV0A==}
     dev: true
 
+  /@unocss/core@0.60.0:
+    resolution: {integrity: sha512-i1j5i/4xiCfogobaOdQCQUEy/Ch8mBtKgpfUIreJtElaF15uIjT2t/G0y7qUz87ZNl+wJoPcWkcSC92HVnjXwg==}
+    dev: true
+
   /@unocss/extractor-arbitrary-variants@0.59.4:
     resolution: {integrity: sha512-RDe4FgMGJQ+tp9GLvhPHni7Cc2O0lHBRMElVlN8LoXJAdODMICdbrEPGJlEfrc+7x/QgVFoR895KpYJh3hIgGA==}
     dependencies:
@@ -3900,6 +3916,16 @@ packages:
     dependencies:
       '@iconify/utils': 2.1.23
       '@unocss/core': 0.59.4
+      ofetch: 1.3.4
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /@unocss/preset-icons@0.60.0:
+    resolution: {integrity: sha512-8DD9PURCfAtN5nlpOAz5ocV8NG1bb1u83WIGYu+uuVbmFUiMVP4RIEtS1+/dXBEtl0EA7rgN9qI5EmzPDrLd1Q==}
+    dependencies:
+      '@iconify/utils': 2.1.23
+      '@unocss/core': 0.60.0
       ofetch: 1.3.4
     transitivePeerDependencies:
       - supports-color
