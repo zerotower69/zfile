@@ -51,6 +51,7 @@ const { upload } = useFileUpload({
     }
   },
   onFileChange(file, files, type) {
+    console.log(files, type)
     if (type === 'add') {
       fileList.value.push(file)
     } else {
@@ -105,7 +106,7 @@ function removeFile(file: UploadFile) {
 
 function handleUpload(files: File[]) {
   files.forEach((file) => {
-    const { file: uploadFIle } = upload(file)
+    upload(file)
   })
 }
 </script>

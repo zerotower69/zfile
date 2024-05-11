@@ -92,6 +92,7 @@ function handleFileChange(evt: Event) {
   const fileList = (evt.target as HTMLInputElement).files!
   if (!fileList.length) return
   const files = [...fileList]
+  ;(evt.target as HTMLInputElement).value = ''
   emits('upload', files)
 }
 

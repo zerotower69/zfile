@@ -29,3 +29,29 @@ export const normalizeUrl = (
 export function formatSize(size: number) {
     return humanFormat(size);
 }
+
+declare type AsyncApply<F extends (...args: any[]) => any> =
+    (
+        fn: F,
+        args: Parameters<F>,
+        delay?: number,
+    ) => Promise<ReturnType<F>>;
+
+export const asyncApply: <
+    F extends (...args: any[]) => any,
+>(
+    fn: F | undefined,
+    args: Parameters<F>,
+    delay?: number,
+) => Promise<ReturnType<F>> = (fn, args, delay = 0) => {
+    return new Promise((resolve, reject) => {
+        try {
+            setTimeout(() => {
+                const res = fn.apply(this, args);
+                resolve(res);
+            }, delay);
+        } catch (err) {
+            reject(err);
+        }
+    });
+};

@@ -142,10 +142,13 @@ export class UploadTask {
         return this.uploadQueue.sliceQueue.add(async () => {
             if (!this._sliced) {
                 this.status = UploadStatus.READING;
-                this.uploadQueue.options?.onSliceStart?.(
-                    this.file,
-                    this.files,
-                );
+                setTimeout(() => {
+                    this.uploadQueue.options?.onSliceStart?.call(
+                        this,
+                        this.file,
+                        this.files,
+                    );
+                }, 0);
                 // eslint-disable-next-line no-useless-catch
                 try {
                     const data =
