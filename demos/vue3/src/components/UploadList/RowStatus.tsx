@@ -20,10 +20,14 @@ export default defineComponent({
       }
     })
     const status = computed(() => props.row!.status)
-    function getRate() {
-      return props.row?.task?.rate ?? ''
-    }
     const leftTime = computed(() => props.row?.task?.leftTime ?? 0)
+    function getRate() {
+      return (props.row?.task?.rate ?? '0B') + '/s'
+    }
+
+    function getLeftTime() {
+      return `剩余时间：${leftTime.value} s`
+    }
     function getStatus(status: UploadStatus) {
       switch (status) {
         case UploadStatus.WAITING:
@@ -40,11 +44,13 @@ export default defineComponent({
           return <div class="text-red">网络中断</div>
         case UploadStatus.UPLOADING:
           return (
-            <div class="flex gap-2">
+            <div class="flex gap-2 justify-between">
               <div class="text-blue">{getRate()}</div>
-              <div class="text-gray">{leftTime.value}</div>
+              <div class="text-gray">{getLeftTime()}</div>
             </div>
           )
+        case UploadStatus.MERGING:
+          return <div class="text-blue">上传完成，处理中...</div>
         case UploadStatus.SUCCESS:
           return <div class="text-green">已完成</div>
         default:

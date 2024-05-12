@@ -35,7 +35,7 @@
             {{ getSize(row) }}
           </template>
         </vxe-column>
-        <vxe-column title="状态" width="220" align="center">
+        <vxe-column title="状态" width="280" align="center">
           <template #default="{ row }">
             <RowStatus :row="row" />
           </template>
@@ -65,11 +65,17 @@
         </template>
       </vxe-table>
     </div>
-    <input type="file" class="hidden" ref="inputRef" @change.self="handleFileChange" />
+    <input
+      type="file"
+      class="hidden"
+      ref="inputRef"
+      :multiple="true"
+      @change.self="handleFileChange"
+    />
   </div>
 </template>
 <script setup lang="ts">
-import { type PropType, ref } from 'vue'
+import { type PropType, ref, toRaw } from 'vue'
 import type { UploadFile } from '@zfile/upload/dist/interface'
 import { formatSize } from '@zfile/upload'
 import { VXETable, modal } from 'vxe-table'
@@ -112,9 +118,10 @@ function getSize(row: UploadFile) {
 }
 
 async function handleRowDelete(row: UploadFile) {
-  const type = await modal.confirm('确认删除吗？')
-  emits('delete-row', row)
-  row.task!.destroy()
+  await modal.confirm('确认删除吗？')
+  const rawRow = toRaw(row)
+  emits('delete-row', rawRow)
+  rawRow.task!.destroy()
 }
 function handleRowRun(row: UploadFile) {
   row.task!.start()

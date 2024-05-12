@@ -3,7 +3,7 @@
   <upload-modal @upload="handleUpload" :files="fileList" />
 </template>
 <script setup lang="ts">
-import { ref, unref } from 'vue'
+import { ref, toRaw, unref } from 'vue'
 import DragBall from '@/components/UploadList/DragBall.vue'
 import { useFileUpload } from '@zfile/upload'
 import type { UploadFile } from '@zfile/upload/dist/interface'
@@ -12,6 +12,7 @@ import { modal } from 'vxe-table'
 const fileList = ref<UploadFile[]>([])
 
 const { upload } = useFileUpload({
+  chunkSize: 1024 * 1024 * 5,
   actions: {
     baseURL: 'http://localhost:3000',
     check: {
@@ -51,7 +52,7 @@ const { upload } = useFileUpload({
     }
   },
   onFileChange(file, files, type) {
-    console.log(files, type)
+    console.log(file, files, type)
     if (type === 'add') {
       fileList.value.push(file)
     } else {
@@ -73,6 +74,9 @@ const { upload } = useFileUpload({
       status: 'success'
     })
   },
+  onStatusChange(status, oldStatus, file) {
+    updateFile(file)
+  },
   onSliceError(error, file, files) {
     updateFile(file)
     modal.message(`[${file.name}]切片失败`, {
@@ -84,12 +88,19 @@ const { upload } = useFileUpload({
     modal.message(`[${file.name}]${error.message}`, {
       status: 'error'
     })
+  },
+  onCancel(message, file, files) {
+    updateFile(file)
+    console.log(file.task?.uploadQueue)
+    modal.message(`[${file.name}]，取消原因:${message}`, {
+      status: 'info'
+    })
   }
 })
 
 function updateFile(file: UploadFile) {
-  const list = unref(fileList)
-  const index = list.findIndex((item) => (item.uid = file.uid))
+  const list = toRaw(unref(fileList))
+  const index = list.findIndex((item) => item.uid === file.uid)
   if (index > -1) {
     list[index] = { ...file }
     fileList.value = [...list]
@@ -98,9 +109,10 @@ function updateFile(file: UploadFile) {
 
 function removeFile(file: UploadFile) {
   const list = unref(fileList)
-  const index = list.findIndex((item) => (item.uid = file.uid))
+  const index = list.findIndex((item) => item.uid === file.uid)
   if (index > -1) {
     fileList.value.splice(index, 1)
+    file.task!.destroy()
   }
 }
 
