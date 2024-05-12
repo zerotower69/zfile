@@ -1,15 +1,16 @@
 <template>
-  <drag-ball />
+  <drag-ball :percentage="allPercentage" />
   <upload-modal @upload="handleUpload" :files="fileList" />
 </template>
 <script setup lang="ts">
 import { ref, toRaw, unref } from 'vue'
 import DragBall from '@/components/UploadList/DragBall.vue'
-import { useFileUpload } from '@zfile/upload'
+import { useFileUpload, getAllPercentage } from '@zfile/upload'
 import type { UploadFile } from '@zfile/upload/dist/interface'
 import { modal } from 'vxe-table'
 
 const fileList = ref<UploadFile[]>([])
+const allPercentage = ref(0)
 
 const { upload } = useFileUpload({
   chunkSize: 1024 * 1024 * 5,
@@ -58,9 +59,11 @@ const { upload } = useFileUpload({
     } else {
       removeFile(file)
     }
+    allPercentage.value = getAllPercentage(files)
   },
-  onProgress(percentage, file, event) {
+  onProgress(percentage, file, files) {
     updateFile(file)
+    allPercentage.value = getAllPercentage(files)
   },
   onSuccess(file) {
     updateFile(file)
