@@ -192,7 +192,7 @@ export class UploadRequestQueue {
             this.current++;
             let tasks = this.queue.get(uploadTask)!;
             //对应的某个文件上传任务(FileTask)，其请求队列为空，就将该任务从队列中移除
-            if (tasks?.length ?? 0) {
+            if (!(tasks?.length ?? 0)) {
                 this.remove(uploadTask);
                 if (!this.uploadTasks.length) break;
             }
