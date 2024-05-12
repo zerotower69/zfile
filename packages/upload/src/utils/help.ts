@@ -4,6 +4,7 @@ import humanFormat, {
 } from "human-format";
 import { transformError } from "./error";
 import { isFunction } from "lodash-es";
+import { UploadFile } from "../interface";
 
 let fileId = 1;
 let chunkId = 2;
@@ -89,3 +90,27 @@ export const syncApply: <F extends (...args: any[]) => any>(
         }
     }
 };
+
+/**
+ * 计算总百分比
+ * @param files
+ * @param precision
+ */
+export function getAllPercentage(
+    files: UploadFile[],
+    precision = 0,
+) {
+    const allUploaded = files.reduce(
+        (acc, cur) => acc + cur.uploaded,
+        0,
+    );
+    const allSize = files.reduce(
+        (acc, cur) => acc + cur.size,
+        0,
+    );
+    const percentage =
+        (Math.min(allUploaded, allSize) / allSize) * 100;
+    return precision > 0
+        ? parseFloat(percentage.toFixed(precision))
+        : Math.round(percentage);
+}

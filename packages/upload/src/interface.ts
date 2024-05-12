@@ -359,7 +359,8 @@ export interface UploadQueueOptions {
     onProgress?: (
         percentage: number,
         file: UploadFile,
-        event?: UploadProgressEvent,
+        files: UploadFile[],
+        event: UploadProgressEvent,
     ) => void;
     /**
      * 文件变化，当增加或者移除时

@@ -123,7 +123,7 @@ export class UploadTask {
                     this.file.chunks = data.fileChunks;
                     this._sliced = true;
                     //切片成功后执行回调
-                    syncApply(
+                    asyncApply(
                         this.uploadQueue.options.onSliceEnd,
                         [this.file, this.files],
                         this.running,
@@ -170,14 +170,14 @@ export class UploadTask {
     private startUpload() {
         return this.uploadQueue.uploadingQueue.add(
             async () => {
-                syncApply(
+                asyncApply(
                     this.uploadQueue.options.onUploadStart,
                     [this.file, this.files],
                     this.running,
                 );
                 if (!this._sliced) {
                     const error = getError("文件未切片");
-                    syncApply(
+                    asyncApply(
                         this.uploadQueue.options
                             .onUploadError,
                         [error, this.file, this.files],
@@ -310,11 +310,7 @@ export class UploadTask {
                 this.status = UploadStatus.WAITING;
                 await this.startSlice();
                 this._sliced = true;
-                this.setStatus(
-                    this._canceled,
-                    UploadStatus.PENDING,
-                    UploadStatus.READY,
-                );
+                this.status = UploadStatus.READY;
             } catch (error) {
                 const theError = transformError(error);
                 if (this._canceled || isCancel(theError)) {
@@ -512,14 +508,6 @@ export class UploadTask {
         this.file.uploaded = val;
     }
 
-    private setStatus(
-        condition: boolean,
-        trueVal: UploadStatus,
-        falseVal: UploadStatus,
-    ) {
-        this.status = condition ? trueVal : falseVal;
-    }
-
     get checkChunkApi() {
         return getCheckChunkApi(this.actions.check, this);
     }
@@ -609,6 +597,7 @@ export class UploadTask {
         asyncApply(this.uploadQueue.options.onProgress, [
             percentage,
             this.file,
+            this.files,
             event,
         ]);
     }
