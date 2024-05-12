@@ -1,4 +1,9 @@
-import humanFormat from "human-format";
+import humanFormat, {
+    ScaleLike,
+    Options,
+} from "human-format";
+import { transformError } from "./error";
+import { isFunction } from "lodash-es";
 
 let fileId = 1;
 let chunkId = 2;
@@ -26,32 +31,61 @@ export const normalizeUrl = (
     return baseURL + url;
 };
 
-export function formatSize(size: number) {
-    return humanFormat(size);
+/**
+ * 外部使用human-format
+ * @param size
+ * @param opts
+ */
+export function formatSize(
+    size: number,
+    opts?: Options<ScaleLike>,
+) {
+    return humanFormat(size, opts);
 }
 
-declare type AsyncApply<F extends (...args: any[]) => any> =
-    (
-        fn: F,
-        args: Parameters<F>,
-        delay?: number,
-    ) => Promise<ReturnType<F>>;
-
+/**
+ *异步apply
+ * @param condition
+ * @param fn
+ * @param args
+ * @param delay
+ */
 export const asyncApply: <
     F extends (...args: any[]) => any,
 >(
     fn: F | undefined,
     args: Parameters<F>,
+    condition?: boolean,
     delay?: number,
-) => Promise<ReturnType<F>> = (fn, args, delay = 0) => {
-    return new Promise((resolve, reject) => {
+) => void = (fn, args, condition = true, delay = 0) => {
+    if (condition && isFunction(fn)) {
         try {
             setTimeout(() => {
-                const res = fn.apply(this, args);
-                resolve(res);
+                fn.apply(this, args);
             }, delay);
         } catch (err) {
-            reject(err);
+            throw transformError(err);
         }
-    });
+    }
+};
+
+/**
+ *同步apply
+ * @param fn
+ * @param args
+ * @param condition
+ */
+export const syncApply: <F extends (...args: any[]) => any>(
+    fn: F | undefined,
+    args: Parameters<F>,
+    condition?: boolean,
+    delay?: number,
+) => void = (fn, args, condition = true) => {
+    if (condition && isFunction(fn)) {
+        try {
+            fn.apply(this, args);
+        } catch (err) {
+            throw transformError(err);
+        }
+    }
 };

@@ -26,14 +26,16 @@ export class TaskQueue {
      */
     add<T>(task: taskFn<T>) {
         this.isCancel = false;
-        return new Promise<T>((resolve, reject) => {
-            this.queue.push({
-                task,
-                resolve,
-                reject,
-            });
-            this._run();
-        });
+        return new Promise<Awaited<T>>(
+            (resolve, reject) => {
+                this.queue.push({
+                    task,
+                    resolve,
+                    reject,
+                });
+                this._run();
+            },
+        );
     }
 
     /**

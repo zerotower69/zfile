@@ -49,7 +49,13 @@ export function useWebWorkerFn<
     let workerStatus: WebWorkerStatus = "PENDING";
     let promise: {
         reject?: (
-            result: ReturnType<T> | ErrorEvent,
+            result:
+                | ReturnType<T>
+                | ErrorEvent
+                | {
+                      status: WebWorkerStatus;
+                      isCancel: boolean;
+                  },
         ) => void;
         resolve?: (result: ReturnType<T>) => void;
     } = {};
@@ -67,6 +73,10 @@ export function useWebWorkerFn<
         if (worker && worker._url && window) {
             worker.terminate();
             URL.revokeObjectURL(worker._url);
+            promise.reject({
+                status: status,
+                isCancel: status === "PENDING",
+            });
             promise = {};
             worker = void 0;
             window.clearTimeout(timeoutId);

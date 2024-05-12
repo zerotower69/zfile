@@ -1,166 +1,25 @@
 import axios, {
-    AxiosHeaders,
     AxiosInstance,
     AxiosRequestConfig,
 } from "axios";
 import {
-    RequestLimit,
     UploadActions,
     UploadFile,
-    UploadProgressEvent,
+    UploadQueueOptions,
     UploadRawFile,
     UploadStatus,
-    WorkerConfig,
 } from "../interface";
 import {
     RequestTask,
     UploadRequestQueue,
 } from "./uploadRequestQueue";
 import { UploadTask } from "./uploadTask";
-import { BigFileError, genFileId } from "../utils";
+import { genFileId } from "../utils";
 import { TaskQueue } from "./TaskQueue";
 import { isObject } from "lodash-es";
 import humanFormat from "human-format";
 
 const DEFAULT_CHUNK_SIZE = 1024 * 1024;
-
-export interface UploadQueueOptions {
-    actions: UploadActions;
-    /**
-     * 是否携带cookie,默认false
-     */
-    withCredentials?: boolean;
-    /**
-     * 分片大小,默认1MB
-     */
-    chunkSize?: number;
-    /**
-     * 全局请求头,可用来设置token
-     */
-    headers?: AxiosHeaders;
-    /**
-     * 全局接口超时，默认10s(10*1000ms)
-     */
-    timeout?: number;
-    /**
-     * 接口并发数
-     */
-    requestLimit?: RequestLimit;
-    /**
-     * 文件并发上传数
-     */
-    parallel?: 1 | 2 | 3;
-    /**
-     * 重试次数，默认3次
-     */
-    maxRetries?: number;
-    /**
-     * worker线程配置
-     */
-    worker?: WorkerConfig;
-    /**
-     * 进度回调
-     * @param file 上传文件
-     * @param percentage 进度
-     * @param 自定义进度事件
-     */
-    onProgress?: (
-        percentage: number,
-        file: UploadFile,
-        event?: UploadProgressEvent,
-    ) => void;
-    /**
-     * 文件变化，当增加或者移除时
-     * @param file
-     * @param files
-     * @param type
-     */
-    onFileChange?: (
-        file: UploadFile,
-        files: UploadFile[],
-        type: "add" | "remove",
-    ) => void;
-    /**
-     * 文件上传成功时
-     * @param file
-     */
-    onSuccess?: (file: UploadFile) => void;
-    /**
-     * 上传文件状态变化时
-     * @param status
-     * @param oldStatus
-     * @param file
-     */
-    onStatusChange?: (
-        status: UploadStatus,
-        oldStatus?: UploadStatus,
-        file?: UploadFile,
-    ) => void;
-    /**
-     *开始切片
-     * @param file
-     * @param files
-     */
-    onSliceStart?: (
-        file: UploadFile,
-        files?: UploadFile[],
-    ) => void;
-    /**
-     * 切片结束
-     * @param file
-     * @param files
-     */
-    onSliceEnd?: (
-        file: UploadFile,
-        files?: UploadFile[],
-    ) => void;
-    onSliceError?: (
-        error: BigFileError,
-        file: UploadFile,
-        files?: UploadFile[],
-    ) => void;
-    /**
-     * 开始上传触发的回调
-     * @param file
-     * @param files
-     */
-    onUploadStart?: (
-        file: UploadFile,
-        files?: UploadFile[],
-    ) => void;
-    /**
-     * 上传时发生的错误
-     * @param error
-     * @param file
-     * @param files
-     */
-    onUploadError?: (
-        error: BigFileError,
-        file: UploadFile,
-        files: UploadFile[],
-    ) => void;
-    /**
-     * 网络中断时触发
-     * @param files
-     */
-    onOffline?: (files: UploadFile[]) => void;
-    /**
-     *网络恢复时触发
-     * @param files
-     */
-    onLine?: (files: UploadFile[]) => void;
-    /**
-     * 上传取消时触发
-     * @param message 取消理由
-     * @param file
-     * @param files
-     */
-    onCancel?: (
-        message: string,
-        file: UploadFile,
-        files?: UploadFile[],
-    ) => void;
-}
 export class UploadQueue {
     actions: UploadActions;
     defHttp: AxiosInstance;

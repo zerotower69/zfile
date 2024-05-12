@@ -35,9 +35,14 @@ export function debugWarn(
 }
 
 export function transformError(e?: any, prefix?: string) {
-    return new BigFileError(
-        `${prefix} ${e?.message ?? e ?? ""}`,
-    );
+    if (e instanceof BigFileError) {
+        return e;
+    }
+    let errorMsg = e?.message ?? e ?? "";
+    if (prefix) {
+        errorMsg = prefix + " " + errorMsg;
+    }
+    return new BigFileError(errorMsg);
 }
 
 export function getError(
@@ -45,4 +50,8 @@ export function getError(
     isCancel = false,
 ) {
     return new BigFileError(`${message}`, isCancel);
+}
+
+export function isCancel(e: any): e is BigFileError {
+    return e instanceof BigFileError && e.isCancel;
 }
