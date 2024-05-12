@@ -61,7 +61,7 @@ export const asyncApply: <
     if (condition && isFunction(fn)) {
         try {
             setTimeout(() => {
-                fn.apply(this, args);
+                fn.apply(null, args);
             }, delay);
         } catch (err) {
             throw transformError(err);
@@ -83,7 +83,7 @@ export const syncApply: <F extends (...args: any[]) => any>(
 ) => void = (fn, args, condition = true) => {
     if (condition && isFunction(fn)) {
         try {
-            fn.apply(this, args);
+            fn.apply(null, args);
         } catch (err) {
             throw transformError(err);
         }
