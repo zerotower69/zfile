@@ -3,19 +3,19 @@
     <div class="z-upload-list-header flex flex-col mb-4">
       <div class="z-upload-list-top-button-group flex justify-between">
         <div class="flex gap-4">
-          <vxe-button class="operate-button">
+          <vxe-button class="operate-button" :disabled="allPauseDisabled" @click="handleAllPause">
             <div class="f-c-c gap-2">
               <span class="inline-block cursor-pointer text-[18px] i-custom:pause"></span>
               <span>全部暂停</span>
             </div>
           </vxe-button>
-          <vxe-button class="operate-button">
+          <vxe-button class="operate-button" :disabled="allRunDisabled" @click="handleAllRun">
             <div class="f-c-c gap-2">
               <span class="inline-block cursor-pointer text-[18px] i-custom:run"></span>
               <span>全部开始</span>
             </div>
           </vxe-button>
-          <vxe-button class="operate-button"
+          <vxe-button class="operate-button" :disabled="allDeleteDisabled" @click="handleAllDelete"
             ><div class="f-c-c gap-2">
               <span class="inline-block cursor-pointer text-[18px] i-custom:delete"></span>
               <span>全部删除</span>
@@ -75,7 +75,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { type PropType, ref, toRaw } from 'vue'
+import { computed, nextTick, type PropType, ref, toRaw } from 'vue'
 import type { UploadFile } from '@zfile/upload/dist/interface'
 import { formatSize } from '@zfile/upload'
 import { VXETable, modal } from 'vxe-table'
@@ -90,6 +90,48 @@ const props = defineProps({
 
 const inputRef = ref<HTMLInputElement | null>(null)
 const emits = defineEmits(['upload', 'delete-row'])
+
+const allRunDisabled = computed(() => {
+  const files = props.files
+  if (!files.length) {
+    return true
+  }
+  return files.every((file) => file.status === 'success' || file.task!.running)
+})
+const allDeleteDisabled = computed(() => props.files.length === 0)
+
+const allPauseDisabled = computed(() => {
+  const files = props.files
+  if (!files.length) {
+    return true
+  }
+  return files.every((file) => !file.task!.running)
+})
+
+function handleAllPause() {
+  props.files.forEach((file) => {
+    nextTick(() => {
+      file.task!.stop('全部暂停')
+    })
+  })
+}
+
+function handleAllRun() {
+  const files = props.files.filter((file) => file.status !== 'success')
+  files.forEach((file) => {
+    nextTick(() => {
+      file.task!.start()
+    })
+  })
+}
+
+function handleAllDelete() {
+  props.files.forEach((file) => {
+    nextTick(() => {
+      file.task!.destroy()
+    })
+  })
+}
 
 function handleUpload() {
   inputRef.value?.click()
@@ -134,9 +176,14 @@ function handleRowPause(row: UploadFile) {
 
 <style lang="less" scoped>
 .operate-button {
+  &.is--disabled {
+    color: darkgray !important;
+  }
   color: black !important;
-  &:hover {
-    color: gray !important;
+  &:not(.is--disabled) {
+    &:hover {
+      color: gray !important;
+    }
   }
 }
 </style>

@@ -3,7 +3,7 @@
   <upload-modal @upload="handleUpload" :files="fileList" />
 </template>
 <script setup lang="ts">
-import { ref, toRaw, unref } from 'vue'
+import { nextTick, ref, toRaw, unref } from 'vue'
 import DragBall from '@/components/UploadList/DragBall.vue'
 import { useFileUpload, getAllPercentage } from '@zfile/upload'
 import type { UploadFile } from '@zfile/upload/dist/interface'
@@ -67,6 +67,10 @@ const { upload } = useFileUpload({
   },
   onSuccess(file) {
     updateFile(file)
+    nextTick(() => {
+      //@ts-ignore
+      allPercentage.value = getAllPercentage(fileList.value)
+    })
     modal.message(`[${file.name}]上传成功`, {
       status: 'success'
     })
