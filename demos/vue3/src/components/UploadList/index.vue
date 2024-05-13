@@ -15,7 +15,7 @@ const allPercentage = ref(0)
 const { upload } = useFileUpload({
   chunkSize: 1024 * 1024 * 5,
   actions: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:4000',
     check: {
       action: '/check',
       method: 'post',
