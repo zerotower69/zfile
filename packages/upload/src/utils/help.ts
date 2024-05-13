@@ -100,6 +100,9 @@ export function getAllPercentage(
     files: UploadFile[],
     precision = 0,
 ) {
+    if (!files.length) {
+        return 0;
+    }
     const allUploaded = files.reduce(
         (acc, cur) => acc + cur.uploaded,
         0,
