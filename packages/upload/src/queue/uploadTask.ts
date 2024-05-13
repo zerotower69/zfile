@@ -406,10 +406,12 @@ export class UploadTask {
      * @param message
      */
     stop(message: string) {
-        this.running = false;
-        this._canceled = true;
-        this.cancelSlice();
-        this.cancelUpload(message);
+        if (this.running) {
+            this.running = false;
+            this._canceled = true;
+            this.cancelSlice();
+            this.cancelUpload(message);
+        }
     }
 
     /**
