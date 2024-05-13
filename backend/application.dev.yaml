@@ -1,0 +1,13 @@
+# sequelize相关
+mysql:
+  host: 'localhost'
+  port: 3306
+  username: "root"
+  password: "12345678"
+  database: "upload_file"
+  dialect: "mysql"
+  synchronize: true
+  timezone: "+08:00"
+  autoLoadModels: true
+  # 打印数据库日志（sequelize）
+  logging: true
