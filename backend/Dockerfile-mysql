@@ -1,0 +1,4 @@
+FROM mysql:latest
+LABEL authors="zerotower"
+
+COPY init.sql /docker-entrypoint-initdb.d

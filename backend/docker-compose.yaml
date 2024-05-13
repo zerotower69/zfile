@@ -1,0 +1,29 @@
+services:
+  file-backend:
+    container_name: upload-file-backend
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    depends_on:
+      - mysql-container
+    ports:
+      - '4000:3000'
+    networks:
+      - common-network
+  mysql-container:
+    container_name: upload-file-mysql
+    build:
+      context: ./
+      dockerfile: ./Dockerfile-mysql
+    environment:
+      - TZ=Asia/Shanghai
+      - MYSQL_ROOT_PASSWORD=12345678
+      - MYSQL_DATABASE=upload_file
+    command:
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    networks:
+      - common-network
+networks:
+  common-network:
+    driver: bridge
