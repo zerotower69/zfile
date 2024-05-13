@@ -170,6 +170,9 @@ export class UploadTask {
     private startUpload() {
         return this.uploadQueue.uploadingQueue.add(
             async () => {
+                this.uploadQueue.requestQueue.updateTaskError(
+                    this,
+                );
                 asyncApply(
                     this.uploadQueue.options.onUploadStart,
                     [this.file, this.files],
@@ -366,7 +369,7 @@ export class UploadTask {
                     this.status = UploadStatus.PENDING;
                     const theError = isCancel(error)
                         ? error
-                        : getError("未知错误", true);
+                        : transformError(error);
                     asyncApply(
                         this.uploadQueue.options.onCancel,
                         [

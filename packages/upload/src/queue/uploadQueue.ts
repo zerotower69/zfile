@@ -96,6 +96,7 @@ export class UploadQueue {
         task._isOpenRetry = openRetry;
         task._retries = retries;
         task._url = config.url;
+        task._task = upload;
         return that.requestQueue.add(upload, task);
     }
 

@@ -28,6 +28,7 @@ export type RequestTask<D = any> = (() => Promise<
     _isOpenRetry?: boolean;
     _retries?: number;
     _url?: string;
+    _task?: UploadTask;
 };
 
 interface TaskContext<T = any> {
@@ -61,7 +62,7 @@ export class UploadRequestQueue {
     queue: WeakMap<UploadTask, TaskContext[]>;
     uploadTasks: UploadTask[];
     tokenSource: WeakMap<TaskContext, CancelTokenSource>;
-    errorMap: Map<string, number>;
+    errorMap: WeakMap<UploadTask, Map<string, number>>;
     private _current: number;
     private timer?: number;
     private isThrottle: boolean;
@@ -86,7 +87,7 @@ export class UploadRequestQueue {
         this.requestLimit = Math.min(6, requestLimit);
         this.isThrottle = false;
         this.maxRetries = maxRetries;
-        this.errorMap = new Map();
+        this.errorMap = new WeakMap();
     }
 
     /**
@@ -224,7 +225,10 @@ export class UploadRequestQueue {
         this.runningCount++;
         const source = task._source!;
         this.tokenSource.set(context, source);
-        const count = this.errorMap.get(task._url) || 0;
+        const count =
+            this.errorMap
+                ?.get(task._task)
+                ?.get(task._url) ?? 0;
         if (count >= 6) {
             reject(
                 new axios.CanceledError(
@@ -239,8 +243,9 @@ export class UploadRequestQueue {
         const promise = Promise.resolve(task());
         //响应成功，直接返回
         promise.then((value) => {
-            if (this.errorMap.has(task._url)) {
-                this.errorMap.set(task._url, 0);
+            const getMap = this.errorMap.get(task._task);
+            if (getMap && getMap.has(task._url)) {
+                getMap.set(task._url, 0);
             }
             this.tokenSource.delete(context);
             resolve(value);
@@ -254,11 +259,18 @@ export class UploadRequestQueue {
                     reject(reason);
                     return;
                 }
-                if (!this.errorMap.has(task._url)) {
-                    this.errorMap.set(task._url, 0);
+                let getMap = this.errorMap.get(task._task);
+                if (!getMap) {
+                    this.errorMap.set(
+                        task._task,
+                        (getMap = new Map()),
+                    );
                 }
-                const count = this.errorMap.get(task._url);
-                this.errorMap.set(task._url, count + 1);
+                if (!getMap.has(task._url)) {
+                    getMap.set(task._url, 0);
+                }
+                const count = getMap.get(task._url);
+                getMap.set(task._url, count + 1);
                 const isOpenRetry =
                     task?._isOpenRetry ?? true;
                 const maxRetries =
@@ -339,6 +351,12 @@ export class UploadRequestQueue {
             this.running = true;
             this.runningCount = 0;
             this.run();
+        }
+    }
+    updateTaskError(task: UploadTask) {
+        const getMap = this.errorMap.get(task);
+        if (getMap) {
+            this.errorMap.set(task, new Map());
         }
     }
 }
