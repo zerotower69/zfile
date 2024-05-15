@@ -14,8 +14,12 @@ const allPercentage = ref(0)
 
 const { upload } = useFileUpload({
   chunkSize: 1024 * 1024 * 5,
+  worker: {
+    // spark_md5_url: new URL('./lib/spark-md5.min.js', window.location.href).href,
+    // thread: 4
+  },
   actions: {
-    baseURL: 'http://localhost:4000',
+    baseURL: import.meta.env.VITE_REQUEST_URL,
     check: {
       action: '/check',
       method: 'post',
