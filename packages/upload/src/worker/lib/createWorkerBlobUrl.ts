@@ -16,12 +16,11 @@ import depsParser from "./depsParser";
  * .catch(postMessage(['ERROR', error])"
  */
 function createWorkerBlobUrl(fn: Function, deps: string[]) {
-    const blobCode = `${depsParser(deps)}; onmessage=(${jobRunner})(${fn})`;
+    const blobCode = `${depsParser(deps)};\n onmessage=(${jobRunner})(${fn})`;
     const blob = new Blob([blobCode], {
         type: "text/javascript",
     });
-    const url = URL.createObjectURL(blob);
-    return url;
+    return URL.createObjectURL(blob);
 }
 
 export default createWorkerBlobUrl;

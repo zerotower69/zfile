@@ -1,6 +1,7 @@
 {
   "name": "@zfile/upload",
-  "version": "1.0.0",
+  "version": "1.0.1-beta.4",
+  "private": false,
   "homepage": "https://github.com/zerotower69/zfile",
   "bugs": {
     "url": "https://github.com/zerotower69/zfile/issues"
@@ -12,8 +13,8 @@
   },
   "license": "MIT",
   "type": "module",
-  "main": "./src/index.ts",
-  "module": "./src/index.ts",
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
@@ -21,7 +22,8 @@
   "scripts": {
     "clean": "pnpm rimraf .turbo node_modules dist",
     "lint": "eslint \"src/**/*.ts\" --fix",
-    "stub": "rollup -c rollup.config.mjs --no-cache"
+    "stub": "rollup -c rollup.config.mjs --no-cache",
+    "publish:beta": "npm version prerelease --preid=beta && npm run stub && npm publish --tag=beta"
   },
   "dependencies": {
     "axios": "^1.6.8",
@@ -40,7 +42,13 @@
     "@types/lodash-es": "^4.17.12",
     "@types/spark-md5": "^3.0.4",
     "rollup": "^4.17.2",
+    "rollup-plugin-external-globals": "^0.10.0",
     "rollup-plugin-polyfill-node": "^0.13.0",
+    "semver": "^7.6.2",
     "tslib": "^2.6.2"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
