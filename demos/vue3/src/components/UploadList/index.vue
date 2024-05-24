@@ -5,7 +5,16 @@
 <script setup lang="ts">
 import { nextTick, ref, toRaw, unref } from 'vue'
 import DragBall from '@/components/UploadList/DragBall.vue'
-import { useFileUpload, getAllPercentage } from '@zfile/upload'
+import {
+  useFileUpload,
+  getAllPercentage,
+  checkTransformResponse,
+  checkTransformError,
+  uploadTransformResponse,
+  uploadTransformError,
+  mergeTransformResponse,
+  mergeTransformError
+} from '@zfile/upload'
 import type { UploadFile } from '@zfile/upload/dist/interface'
 import { modal } from 'vxe-table'
 
@@ -27,6 +36,48 @@ const { upload } = useFileUpload({
         return {
           fileHash: file.hash
         }
+      },
+      transformResponse(response, chunks, file) {
+        const data = response.data
+        if (data.success) {
+          return {
+            success: true,
+            response
+          }
+        }
+        const list: { hash: string; index: number }[] =
+          data.data?.map((item: Record<string, any>) => ({
+            hash: item.chunk_hash,
+            index: item.chunk_number
+          })) ?? []
+        list.sort((pre, cur) => pre.index - cur.index)
+        const indexSet = new Set<number>()
+        const hashSet = new Set<string>()
+
+        for (let i = 0; i < list.length; i++) {
+          indexSet.add(list[i].index)
+          hashSet.add(list[i].hash)
+        }
+        const leftChunks = chunks.filter((chunk) => {
+          return !(indexSet.has(chunk.index) && hashSet.has(chunk.hash as string))
+        })
+        const uploadedChunks = chunks.filter((chunk) => {
+          return indexSet.has(chunk.index) && hashSet.has(chunk.hash as string)
+        })
+        const check = !leftChunks.length
+        return {
+          success: check,
+          response,
+          chunks: leftChunks,
+          uploadedChunks
+        }
+      },
+      transformError(error, isCancel) {
+        return {
+          success: false,
+          error,
+          isCancel
+        }
       }
     },
     upload: {
@@ -42,7 +93,9 @@ const { upload } = useFileUpload({
         formData.append('fileHash', `${file.hash}`)
         formData.append('chunkHash', `${chunk.hash}`)
         return formData
-      }
+      },
+      transformResponse: uploadTransformResponse,
+      transformError: uploadTransformError
     },
     merge: {
       action: '/merge',
@@ -53,7 +106,9 @@ const { upload } = useFileUpload({
           md5: file.hash,
           fileName: file.name
         }
-      }
+      },
+      transformResponse: mergeTransformResponse,
+      transformError: mergeTransformError
     }
   },
   onFileChange(file, files, type) {
