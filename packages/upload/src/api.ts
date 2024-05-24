@@ -1,9 +1,5 @@
-import axios, { AxiosResponse } from "axios";
-import { isFunction } from "lodash-es";
+import axios from "axios";
 import {
-    CheckApiReturn,
-    MergeApiReturn,
-    UploadApiReturn,
     UploadChunk,
     UploadFile,
     UploadActions,
@@ -13,105 +9,6 @@ import {
 } from "./interface";
 import { UploadTask } from "./queue/uploadTask";
 import { normalizeUrl } from "./utils";
-
-const checkTransformResponse: (
-    response: AxiosResponse,
-    chunks: UploadChunk[],
-) => Awaited<CheckApiReturn> = (
-    response: AxiosResponse,
-    chunks: UploadChunk[],
-) => {
-    const data = response.data;
-    if (data.success) {
-        return {
-            success: true,
-            response,
-        };
-    }
-    const list: { hash: string; index: number }[] =
-        data.data?.map((item: Record<string, any>) => ({
-            hash: item.chunk_hash,
-            index: item.chunk_number,
-        })) ?? [];
-    list.sort((pre, cur) => pre.index - cur.index);
-    const indexSet = new Set<number>();
-    const hashSet = new Set<string>();
-
-    for (let i = 0; i < list.length; i++) {
-        indexSet.add(list[i].index);
-        hashSet.add(list[i].hash);
-    }
-    const leftChunks = chunks.filter((chunk) => {
-        return !(
-            indexSet.has(chunk.index) &&
-            hashSet.has(chunk.hash as string)
-        );
-    });
-    const uploadedChunks = chunks.filter((chunk) => {
-        return (
-            indexSet.has(chunk.index) &&
-            hashSet.has(chunk.hash as string)
-        );
-    });
-    const check = !leftChunks.length;
-    return {
-        success: check,
-        response,
-        chunks: leftChunks,
-        uploadedChunks,
-    };
-};
-
-const checkTransformError = (
-    error: any,
-    isCancel: boolean,
-): Awaited<CheckApiReturn> => {
-    return {
-        success: false,
-        error,
-        isCancel,
-    };
-};
-
-const uploadTransformResponse = (
-    response: AxiosResponse,
-): Awaited<UploadApiReturn> => {
-    return {
-        success: true,
-        response,
-    };
-};
-
-const uploadTransformError = (
-    error: any,
-    isCancel: boolean,
-): Awaited<UploadApiReturn> => {
-    return {
-        success: false,
-        error,
-        isCancel,
-    };
-};
-
-const mergeTransformResponse = (
-    response: AxiosResponse,
-): Awaited<MergeApiReturn> => {
-    return {
-        success: true,
-        response,
-    };
-};
-
-const mergeTransformError = (
-    error: any,
-    isCancel: boolean,
-): Awaited<MergeApiReturn> => {
-    return {
-        success: false,
-        error,
-        isCancel,
-    };
-};
 
 /**
  * 获取分片检查API
@@ -155,27 +52,17 @@ export function getCheckChunkApi(
             )
             .then(
                 (resp) => {
-                    return isFunction(transformResponse)
-                        ? transformResponse(
-                              resp,
-                              chunks,
-                              file,
-                          )
-                        : checkTransformResponse(
-                              resp,
-                              chunks!,
-                          );
+                    return transformResponse(
+                        resp,
+                        chunks,
+                        file,
+                    );
                 },
                 (error) =>
-                    isFunction(transformError)
-                        ? transformError(
-                              error,
-                              axios.isCancel(error),
-                          )
-                        : checkTransformError(
-                              error,
-                              axios.isCancel(error),
-                          ),
+                    transformError(
+                        error,
+                        axios.isCancel(error),
+                    ),
             );
     };
 }
@@ -236,23 +123,16 @@ export function getUploadChunkApi<D = any>(
             )
             .then(
                 (response) =>
-                    isFunction(transformResponse)
-                        ? transformResponse(
-                              response,
-                              chunk,
-                              file,
-                          )
-                        : uploadTransformResponse(response),
+                    transformResponse(
+                        response,
+                        chunk,
+                        file,
+                    ),
                 (error) =>
-                    isFunction(transformError)
-                        ? transformError(
-                              error,
-                              axios.isCancel(error),
-                          )
-                        : uploadTransformError(
-                              error,
-                              axios.isCancel(error),
-                          ),
+                    transformError(
+                        error,
+                        axios.isCancel(error),
+                    ),
             );
     };
 }
@@ -305,23 +185,16 @@ export function getMergeChunkApi(
             )
             .then(
                 (response) =>
-                    isFunction(transformResponse)
-                        ? transformResponse(
-                              response,
-                              file,
-                              chunks,
-                          )
-                        : mergeTransformResponse(response),
+                    transformResponse(
+                        response,
+                        file,
+                        chunks,
+                    ),
                 (error) =>
-                    isFunction(transformError)
-                        ? transformError(
-                              error,
-                              axios.isCancel(error),
-                          )
-                        : mergeTransformError(
-                              error,
-                              axios.isCancel(error),
-                          ),
+                    transformError(
+                        error,
+                        axios.isCancel(error),
+                    ),
             );
     };
 }

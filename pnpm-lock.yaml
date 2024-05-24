@@ -176,7 +176,7 @@ importers:
         specifier: ^10.9.0
         version: 10.9.0(vue@3.4.26)
       '@zfile/upload':
-        specifier: ^1.0.1-beta.4
+        specifier: workspace:*
         version: link:../../packages/upload
       vue:
         specifier: ^3.4.21

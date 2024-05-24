@@ -137,20 +137,20 @@ export interface CheckAction {
     /**
      * 响应成功处理，结合业务需要转换
      */
-    transformResponse?: (
+    transformResponse: (
         response: AxiosResponse,
         chunks: UploadChunk[],
         file: UploadFile,
-    ) => CheckApiReturn;
+    ) => Awaited<CheckApiReturn>;
     /**
      * 响应错误处理
      * @param error 错误
      * @param isCancel 接口是否手动取消
      */
-    transformError?: (
+    transformError: (
         error: any,
         isCancel: boolean,
-    ) => CheckApiReturn;
+    ) => Awaited<CheckApiReturn>;
     /**
      * 接口响应超时
      */
@@ -194,20 +194,20 @@ export interface UploadAction {
     /**
      * 响应成功处理，结合业务需要转换
      */
-    transformResponse?: (
+    transformResponse: (
         response: AxiosResponse,
         chunk: UploadChunk,
         file: UploadFile,
-    ) => UploadApiReturn;
+    ) => Awaited<UploadApiReturn>;
     /**
      * 响应错误处理
      * @param error 错误
      * @param isCancel 接口是否手动取消
      */
-    transformError?: (
+    transformError: (
         error: any,
         isCancel: boolean,
-    ) => UploadApiReturn;
+    ) => Awaited<UploadApiReturn>;
     /**
      * 接口响应超时
      */
@@ -260,20 +260,20 @@ export interface MergeAction {
     /**
      * 响应成功处理
      */
-    transformResponse?: (
+    transformResponse: (
         response: AxiosResponse,
         file: UploadFile,
         chunks: UploadChunk[],
-    ) => MergeApiReturn;
+    ) => Awaited<MergeApiReturn>;
     /**
      * 响应失败处理
      * @param error 错误信息
      * @param isCancel 接口是否手动取消
      */
-    transformError?: (
+    transformError: (
         error: any,
         isCancel: boolean,
-    ) => MergeApiReturn;
+    ) => Awaited<MergeApiReturn>;
     /**
      * 接口响应超时
      */

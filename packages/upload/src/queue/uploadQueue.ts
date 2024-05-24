@@ -103,10 +103,14 @@ export class UploadQueue {
     /**
      * 新增上传任务
      * @param file 原始文件
+     * @param data
      */
-    add(file: File) {
+    add(file: File, data?: Record<string, any>) {
         //TODO:确定如果是同一个文件的处理方式
         const uploadFile = this.initFile(file);
+        if (data) {
+            uploadFile.data = data;
+        }
         //新建上传任务
         const uploadTask = new UploadTask({
             file: uploadFile,
