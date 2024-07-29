@@ -202,6 +202,7 @@ export class UploadTask {
                     throw transformError(check.error);
                 } else if (check.success) {
                     //秒传
+                    //TODO:秒传后是否有必要再merge
                     this.status = UploadStatus.MERGING;
                     //还得调用一次merge
                     const merge = await this.mergeChunkApi(

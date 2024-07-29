@@ -1,7 +1,9 @@
-import axios, {
+import type {
+    RawAxiosRequestHeaders,
     AxiosInstance,
     AxiosRequestConfig,
 } from "axios";
+import axios from "axios";
 import {
     UploadActions,
     UploadFile,
@@ -16,7 +18,7 @@ import {
 import { UploadTask } from "./uploadTask";
 import { genFileId } from "../utils";
 import { TaskQueue } from "./TaskQueue";
-import { isObject } from "lodash-es";
+import { isFunction, isObject } from "lodash-es";
 import humanFormat from "human-format";
 
 const DEFAULT_CHUNK_SIZE = 1024 * 1024;
@@ -38,7 +40,6 @@ export class UploadQueue {
             withCredentials = false,
             timeout = 10 * 1000,
             maxRetries = 3,
-            headers,
             requestLimit = 6,
             worker = {},
         } = options;
@@ -57,6 +58,13 @@ export class UploadQueue {
         this.taskQueue = [];
         this.sliceQueue = new TaskQueue(parallel);
         this.uploadingQueue = new TaskQueue(parallel);
+        //compute headers
+        let headers: RawAxiosRequestHeaders = {};
+        if (isFunction(options.headers)) {
+            headers = options.headers();
+        } else {
+            headers = options.headers || {};
+        }
         this.defHttp = axios.create({
             withCredentials,
             headers,

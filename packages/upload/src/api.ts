@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { RawAxiosRequestHeaders } from "axios";
 import {
     UploadChunk,
     UploadFile,
@@ -8,7 +9,8 @@ import {
     MergeApi,
 } from "./interface";
 import { UploadTask } from "./queue/uploadTask";
-import { normalizeUrl } from "./utils";
+import { isBoolean, normalizeUrl } from "./utils";
+import { isFunction } from "lodash-es";
 
 /**
  * 获取分片检查API
@@ -29,6 +31,21 @@ export function getCheckChunkApi(
         transformError,
         retries = 3,
     } = action;
+    //compute headers
+    let headers: RawAxiosRequestHeaders =
+        task.uploadQueue.defHttp.defaults.headers;
+    if (isFunction(action.headers)) {
+        headers = action.headers() || {};
+    } else if (
+        isBoolean(action.headers) &&
+        !action.headers
+    ) {
+        headers = {};
+    } else {
+        headers =
+            (action.headers as RawAxiosRequestHeaders) ||
+            {};
+    }
     //normalize action
     return (file: UploadFile, chunks?: UploadChunk[]) => {
         const params =
@@ -45,6 +62,7 @@ export function getCheckChunkApi(
                     timeout: timeout,
                     params: params,
                     data: data,
+                    headers,
                 },
                 task,
                 retries > 0,
@@ -89,6 +107,21 @@ export function getUploadChunkApi<D = any>(
         transformError,
         retries = 3,
     } = action;
+    //compute headers
+    let headers: RawAxiosRequestHeaders =
+        task.uploadQueue.defHttp.defaults.headers;
+    if (isFunction(action.headers)) {
+        headers = action.headers() || {};
+    } else if (
+        isBoolean(action.headers) &&
+        !action.headers
+    ) {
+        headers = {};
+    } else {
+        headers =
+            (action.headers as RawAxiosRequestHeaders) ||
+            {};
+    }
     return async function (
         chunk: UploadChunk,
         file?: UploadFile,
@@ -116,6 +149,7 @@ export function getUploadChunkApi<D = any>(
                         //_t防止浏览器缓存可能造成的问题
                         _t: Date.now() + uploadId++,
                     },
+                    headers,
                 },
                 task,
                 retries > 0,
@@ -156,6 +190,21 @@ export function getMergeChunkApi(
         transformError,
         retries = 3,
     } = action;
+    //compute headers
+    let headers: RawAxiosRequestHeaders =
+        task.uploadQueue.defHttp.defaults.headers;
+    if (isFunction(action.headers)) {
+        headers = action.headers() || {};
+    } else if (
+        isBoolean(action.headers) &&
+        !action.headers
+    ) {
+        headers = {};
+    } else {
+        headers =
+            (action.headers as RawAxiosRequestHeaders) ||
+            {};
+    }
     return async function (file, chunks) {
         const params = transformPrams?.call(
             null,
@@ -178,6 +227,7 @@ export function getMergeChunkApi(
                     timeout: timeout,
                     params: params,
                     data: data,
+                    headers,
                 },
                 task,
                 retries > 0,
