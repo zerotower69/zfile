@@ -203,20 +203,20 @@ export class UploadTask {
                 } else if (check.success) {
                     //秒传
                     //TODO:秒传后是否有必要再merge
-                    this.status = UploadStatus.MERGING;
-                    //还得调用一次merge
-                    const merge = await this.mergeChunkApi(
-                        this.file,
-                        this.chunks,
-                    );
-                    if (merge.isCancel || this._canceled) {
-                        this._canceled = true;
-                        this.status = UploadStatus.CANCEL;
-                        throw getError("取消操作", true);
-                    }
-                    if (!merge.success) {
-                        throw transformError(merge.error);
-                    }
+                    // this.status = UploadStatus.MERGING;
+                    // //还得调用一次merge
+                    // const merge = await this.mergeChunkApi(
+                    //     this.file,
+                    //     this.chunks,
+                    // );
+                    // if (merge.isCancel || this._canceled) {
+                    //     this._canceled = true;
+                    //     this.status = UploadStatus.CANCEL;
+                    //     throw getError("取消操作", true);
+                    // }
+                    // if (!merge.success) {
+                    //     throw transformError(merge.error);
+                    // }
                     this.uploadedSize = this.file.size;
                     return;
                 }
@@ -234,6 +234,10 @@ export class UploadTask {
                     this.file,
                     this.chunks,
                 );
+                if (checkAgain.success) {
+                    this.uploadedSize = this.file.size;
+                    return;
+                }
                 if (checkAgain.isCancel || this._canceled) {
                     //取消上传
                     this._canceled = true;

@@ -1,5 +1,5 @@
-import {
-    AxiosHeaders,
+import type {
+    RawAxiosRequestHeaders,
     AxiosProgressEvent,
     AxiosResponse,
     Method,
@@ -8,29 +8,92 @@ import { UploadTask } from "./queue/uploadTask";
 import { BigFileError } from "./utils";
 
 export interface UploadFile {
+    /**
+     * the name of upload file
+     */
     name: string;
+    /**
+     * the size of upload file
+     */
     size: number;
+    /**
+     * the beautiful format uploaded size for human
+     */
     humanSize: string;
+    /**
+     * unique id
+     */
     uid: number;
+    /**
+     * original JavaScript File object
+     */
     raw: UploadRawFile;
+    /**
+     * the size of chunk
+     */
     chunkSize: number;
+    /**
+     * the size of file
+     */
     total: number;
+    /**
+     * the unique hash of file
+     */
     hash?: string;
+    /**
+     * the progress of uploaded
+     */
     percentage?: number;
+    /**
+     * extract params
+     */
     params?: Record<string, any>;
+    /**
+     * extract fields
+     */
     data?: Record<string, any>;
+    /**
+     * all slicing chunks
+     */
     chunks?: UploadChunk[];
+    /**
+     * the number of already uploaded
+     */
     uploaded: number;
+    /**
+     * the status of file
+     */
     status: UploadStatus;
+    /**
+     * upload task
+     */
     task?: UploadTask;
 }
 
 export interface UploadChunk {
+    /**
+     * the name of original file
+     */
     filename: string;
+    /**
+     * raw chunk data
+     */
     raw: Blob;
+    /**
+     * unique value
+     */
     uid: number;
+    /**
+     * the size of chunk
+     */
     size: number;
+    /**
+     * the sequence of chunk
+     */
     index: number;
+    /**
+     * original UploadFile object
+     */
     originFile?: UploadFile;
     percentage?: number;
     hash?: string;
@@ -50,6 +113,9 @@ export interface UploadProgressEvent {
     raw: UploadRawFile;
 }
 
+/**
+ * the enum of the status of UploadFile
+ */
 export enum UploadStatus {
     WAITING = "waiting",
     READING = "reading",
@@ -63,16 +129,22 @@ export enum UploadStatus {
     SUCCESS = "success",
 }
 
-export interface RequestQueueOptions {
-    timeout?: number;
-    headers?: AxiosHeaders;
-    withCredentials?: boolean;
-}
-
 export type CheckApiReturn<D = any> = Promise<{
+    /**
+     * the file exit or not
+     */
     success: boolean;
+    /**
+     *  the chunks of will be uploaded
+     */
     chunks?: UploadChunk[];
+    /**
+     * the chunks of already be uploaded
+     */
     uploadedChunks?: UploadChunk[];
+    /**
+     * the response of axios response
+     */
     response?: AxiosResponse<D>;
     error?: any;
     isCancel?: boolean;
@@ -110,32 +182,42 @@ export type MergeApi = (
     chunks?: UploadChunk[],
 ) => MergeApiReturn;
 
+/**
+ * check file api action,to check the file exit or not
+ */
 export interface CheckAction {
     /**
-     * 切片检查接口路径
+     * the request url of check file
      */
     action: string;
     /**
-     * 请求方式
+     * the request method of check file
      */
     method: Method | string;
     /**
-     * params参数转换
+     * the request headers of check file, you can use to set your token.
+     */
+    headers?:
+        | RawAxiosRequestHeaders
+        | boolean
+        | (() => RawAxiosRequestHeaders);
+    /**
+     * transform to request params
      * @see
-     * @param file 上传文件对象，可以从其中拿到切片信息
+     * @param file upload file object
      */
     transformPrams?: (
         file: UploadFile,
     ) => Record<string, any>;
     /**
-     * body请求信息，结合实际业务需要指定
-     * @param file 上传文件对象，可以从其中拿到切片信息
+     * request body, you must set it by your real need.
+     * @param file upload file object
      */
     transformData?: (
         file: UploadFile,
     ) => FormData | Record<string, any>;
     /**
-     * 响应成功处理，结合业务需要转换
+     * transform raw axios response to check api response, you must set it to make sure all right.
      */
     transformResponse: (
         response: AxiosResponse,
@@ -143,56 +225,64 @@ export interface CheckAction {
         file: UploadFile,
     ) => Awaited<CheckApiReturn>;
     /**
-     * 响应错误处理
-     * @param error 错误
-     * @param isCancel 接口是否手动取消
+     * transform raw axios Error to the request error of check api.
+     * @param error Error
+     * @param isCancel if true, means the error of check api because of canceling.
      */
     transformError: (
         error: any,
         isCancel: boolean,
     ) => Awaited<CheckApiReturn>;
     /**
-     * 接口响应超时
+     * the request timeout of check api, default 10s(unit:ms)
      */
     timeout?: number;
     /**
-     * 接口重试次数，默认3。设置为0表示不重试，如果由于暂停、删除操作等自动取消接口则不生效
+     * when the error of request happened, request will try again until the count of retries is equal "retries",
+     * but it will not be effective, which the error due to canceling or pause
      */
     retries?: number;
 }
 export interface UploadAction {
     /**
-     * 切片上传接口路径
+     * the request url of upload single chunk
      */
     action: string;
     /**
-     * 请求方法（post）
+     * the request method of upload single chunk, suggest use "post"
      */
     method: Method | string;
     /**
-     * 切片上传的文件字段名，默认“file”
+     * the request headers of upload single chunk, you can use to set your token.
+     */
+    headers?:
+        | RawAxiosRequestHeaders
+        | boolean
+        | (() => RawAxiosRequestHeaders);
+    /**
+     * the name field of upload chunk, default: "file"
      */
     file?: string;
     /**
-     * params参数转换
-     * @param chunk 切片
-     * @param file 上传文件对象，可取出其它信息
+     * transform data to the request params of upload request
+     * @param chunk will upload chunk
+     * @param file uploaded file object
      */
     transformParams?: (
         chunk: UploadChunk,
         file: UploadFile,
     ) => Record<string, any>;
     /**
-     * body请求信息，结合实际业务需要指定
-     * @param chunk 切片
-     * @param file 上传文件对象，UploadFile
+     * request body, you must set it by your real need.
+     * @param chunk will upload chunk
+     * @param file uploaded file object
      */
     transformData?: (
         chunk: UploadChunk,
         file: UploadFile,
     ) => FormData;
     /**
-     * 响应成功处理，结合业务需要转换
+     * transform raw axios response to upload api response, you must set it to make sure all right.
      */
     transformResponse: (
         response: AxiosResponse,
@@ -200,24 +290,25 @@ export interface UploadAction {
         file: UploadFile,
     ) => Awaited<UploadApiReturn>;
     /**
-     * 响应错误处理
-     * @param error 错误
-     * @param isCancel 接口是否手动取消
+     * transform raw axios Error to the request error of upload api.
+     * @param error Error
+     * @param isCancel if true, means the error of check api because of canceling.
      */
     transformError: (
         error: any,
         isCancel: boolean,
     ) => Awaited<UploadApiReturn>;
     /**
-     * 接口响应超时
+     * the request timeout of upload api, default 10s(unit:ms)
      */
     timeout?: number;
     /**
-     * 接口重试次数，默认3。设置为0表示不重试，如果由于暂停、删除操作等自动取消接口则不生效
+     * when the error of request happened, request will try again until the count of retries is equal "retries",
+     * but it will not be effective, which the error due to canceling or pause
      */
     retries?: number;
     /**
-     * 切片上传进度回调
+     * will be called when the progress of file change, it's designed to monitor the progress of file
      * @param percentage 进度
      * @param chunk UploadChunk
      * @param evt Axios 进度事件
@@ -230,35 +321,46 @@ export interface UploadAction {
 }
 
 //TODO:允许merge之后再加入业务处理逻辑
+
+/**
+ * merge file action
+ */
 export interface MergeAction {
     /**
-     * 切片合并接口路径
+     * the request url of merge file
      */
     action: string;
     /**
-     * 请求方式
+     * the method of merge file request
      */
     method: Method | string;
     /**
-     * params参数转换
-     * @param file 上传文件对象
-     * @param chunks 所有的切片信息
+     * the request headers of merge api, you can use to set your token.
+     */
+    headers?:
+        | RawAxiosRequestHeaders
+        | boolean
+        | (() => RawAxiosRequestHeaders);
+    /**
+     * p
+     * @param file UploadFile object
+     * @param chunks  the chunks of file
      */
     transformPrams?: (
         file: UploadFile,
         chunks: UploadChunk[],
     ) => Record<string, any>;
     /**
-     * body 请求信息，根据业务需要给定
-     * @param file 上传文件对象
-     * @param chunks 所有的切片信息
+     * transform data to the request params of merge api
+     * @param file UploadFile object
+     * @param chunks the chunks of file
      */
     transformData?: (
         file: UploadFile,
         chunks: UploadChunk[],
     ) => FormData | Record<string, any>;
     /**
-     * 响应成功处理
+     * transform raw axios response to merge api response, you must set it to make sure all right.
      */
     transformResponse: (
         response: AxiosResponse,
@@ -266,20 +368,21 @@ export interface MergeAction {
         chunks: UploadChunk[],
     ) => Awaited<MergeApiReturn>;
     /**
-     * 响应失败处理
-     * @param error 错误信息
-     * @param isCancel 接口是否手动取消
+     * transform raw axios Error to the request error of merge api.
+     * @param error Error
+     * @param isCancel if true, means the error of merge api because of canceling.
      */
     transformError: (
         error: any,
         isCancel: boolean,
     ) => Awaited<MergeApiReturn>;
     /**
-     * 接口响应超时
+     * the request timeout of merge api, default 10s(unit:ms)
      */
     timeout?: number;
     /**
-     * 接口重试次数，默认3。设置为0表示不重试，如果由于暂停、删除操作等自动取消接口则不生效
+     * when the error of request happened, request will try again until the count of retries is equal "retries",
+     * but it will not be effective, which the error due to canceling or pause
      */
     retries?: number;
 }
@@ -291,27 +394,30 @@ export interface UploadActions {
     merge: MergeAction;
 }
 
-//接口并发数 1-6
+/**
+ * the number of concurrent requests
+ */
 export type RequestLimit = 1 | 2 | 3 | 4 | 5 | 6;
 
 /**
- * worker配置
+ * the config of web worker
  */
 export interface WorkerConfig {
     /**
-     *允许最大线程数，开发时，可通过navigator.hardwareConcurrency查看机器上允许的最大线程数
+     * the max number if thread by web worker.
+     * You can use navigator.hardwareConcurrency to get max number of your machine.
      */
     thread?: number;
     /**
-     * 文件切片并发，允许多少个文件同时切片
+     * the max number of files can be sliced to chunks at the same time
      */
     parallel?: number;
     /**
-     * 切片响应超时，如果超过指定时间为完成切片，将终止所有相关的worker线程，切片失败。默认：5*60*1000
+     * the slicing operate should be finished less than timeout.default：5min(unit:ms)
      */
     timeout?: number;
     /**
-     * 指定worker中 spark-md5 引用的资源路径
+     * the path of sparkMD5 javascript file
      */
     spark_md5_url?: string;
 }
@@ -319,42 +425,44 @@ export interface WorkerConfig {
 export interface UploadQueueOptions {
     actions: UploadActions;
     /**
-     * 是否携带cookie,默认false
+     * with cookie, default: false
      */
     withCredentials?: boolean;
     /**
-     * 分片大小,默认1MB
+     * the slicing size of every chunk of file, default: 1MB(unit:byte)
      */
     chunkSize?: number;
     /**
-     * 全局请求头,可用来设置token
+     * global request headers, you can use it to set your token
      */
-    headers?: AxiosHeaders;
+    headers?:
+        | RawAxiosRequestHeaders
+        | (() => RawAxiosRequestHeaders);
     /**
-     * 全局接口超时，默认10s(10*1000ms)
+     * global request timeout，default:10s(10*1000ms)
      */
     timeout?: number;
     /**
-     * 接口并发数
+     *
      */
     requestLimit?: RequestLimit;
     /**
-     * 文件并发上传数
+     * the number of allow upload file at the same time
      */
     parallel?: 1 | 2 | 3;
     /**
-     * 重试次数，默认3次
+     * the number of try request,default:3
      */
     maxRetries?: number;
     /**
-     * worker线程配置
+     * the config of web worker
      */
     worker?: WorkerConfig;
     /**
-     * 进度回调
-     * @param file 上传文件
-     * @param percentage 进度
-     * @param 自定义进度事件
+     * will be called when the progress of file change
+     * @param file
+     * @param percentage
+     * @param event upload progress event
      */
     onProgress?: (
         percentage: number,
@@ -363,7 +471,7 @@ export interface UploadQueueOptions {
         event: UploadProgressEvent,
     ) => void;
     /**
-     * 文件变化，当增加或者移除时
+     * will be called when add file or remove file
      * @param file
      * @param files
      * @param type
@@ -374,12 +482,12 @@ export interface UploadQueueOptions {
         type: "add" | "remove",
     ) => void;
     /**
-     * 文件上传成功时
+     * will be called when the file upload successfully
      * @param file
      */
     onSuccess?: (file: UploadFile) => void;
     /**
-     * 上传文件状态变化时
+     * will be called when the status of uploadFile change
      * @param status
      * @param oldStatus
      * @param file
@@ -390,7 +498,7 @@ export interface UploadQueueOptions {
         file: UploadFile,
     ) => void;
     /**
-     *开始切片
+     * will be called when slicing chunks start
      * @param file
      * @param files
      */
@@ -399,7 +507,7 @@ export interface UploadQueueOptions {
         files: UploadFile[],
     ) => void;
     /**
-     * 切片结束
+     * will be called when slicing chunk finish
      * @param file
      * @param files
      */
@@ -407,13 +515,19 @@ export interface UploadQueueOptions {
         file: UploadFile,
         files: UploadFile[],
     ) => void;
+    /**
+     * will be called when slicing chunks error happened
+     * @param error request error
+     * @param file single upload file
+     * @param files all upload files
+     */
     onSliceError?: (
         error: BigFileError,
         file: UploadFile,
         files: UploadFile[],
     ) => void;
     /**
-     * 开始上传触发的回调
+     * will be called when single upload file start request
      * @param file
      * @param files
      */
@@ -422,7 +536,7 @@ export interface UploadQueueOptions {
         files: UploadFile[],
     ) => void;
     /**
-     * 上传时发生的错误
+     * will be called when request error happened
      * @param error
      * @param file
      * @param files
@@ -433,20 +547,20 @@ export interface UploadQueueOptions {
         files: UploadFile[],
     ) => void;
     /**
-     * 网络中断时触发
-     * @param files
+     * will be called when the status of network from "online" to "offline"
+     * @param files all upload files
      */
     onOffline?: (files: UploadFile[]) => void;
     /**
-     *网络恢复时触发
-     * @param files
+     * will be called when the status of network from "offline" to "online"
+     * @param files all uploaded files
      */
     onLine?: (files: UploadFile[]) => void;
     /**
-     * 上传取消时触发
-     * @param message 取消理由
-     * @param file
-     * @param files
+     * will be called when the upload operation be canceling
+     * @param message the reason of canceling
+     * @param file single upload file
+     * @param files all upload files
      */
     onCancel?: (
         message: string,
