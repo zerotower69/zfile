@@ -1,8 +1,8 @@
 {
-  "name": "upload-backen",
+  "name": "upload-backend",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": "zerotower",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {

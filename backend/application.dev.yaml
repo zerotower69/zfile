@@ -10,4 +10,4 @@ mysql:
   timezone: "+08:00"
   autoLoadModels: true
   # 打印数据库日志（sequelize）
-  logging: true
+  logging: false

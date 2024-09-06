@@ -136,8 +136,8 @@ export class AppController {
       //创建合并后文件的文件路径
       const filePath = 'uploads/files/' + fileName;
       //读取对应hash文件夹下的所有分片文件的名称
-      const chunkList: string[] = fs.existsSync(chunkPath) ? fs.readdirSync(chunkPath) : [];
-      if (chunkList.length === 0) {
+      const chunkFiles: string[] = fs.existsSync(chunkPath) ? fs.readdirSync(chunkPath) : [];
+      if (chunkFiles.length === 0) {
         //分片为空，提前返回
         return {
           success: false,
@@ -145,23 +145,42 @@ export class AppController {
         };
       }
       //分片排序
-      chunkList.sort((a: string, b: string) => {
+      chunkFiles.sort((a: string, b: string) => {
         const indexA = parseInt(a.split('_').pop());
         const indexB = parseInt(b.split('_').pop());
         return indexA - indexB;
       });
-      if (chunkList.length !== total) {
+      if (chunkFiles.length !== total) {
         throw new HttpException('分片缺失', HttpStatus.INTERNAL_SERVER_ERROR);
       } else {
         if (!fs.existsSync('uploads/files')) {
           fs.mkdirSync('uploads/files');
         }
-        await fs.promises.writeFile(filePath, '');
-        for (let i = 0; i < chunkList.length; i++) {
-          const chunkName = `${chunkPath}/${chunkList[i]}`;
-          const chunk = await fs.promises.readFile(chunkName);
-          await fs.promises.appendFile(filePath, chunk);
+        // await fs.promises.writeFile(filePath, '');
+        // for (let i = 0; i < chunkFiles.length; i++) {
+        //   const chunkName = `${chunkPath}/${chunkFiles[i]}`;
+        //   const chunk = await fs.promises.readFile(chunkName);
+        //   await fs.promises.appendFile(filePath, chunk);
+        // }
+
+        //输出流
+        const outputStream = fs.createWriteStream(filePath);
+        for (let i = 0; i < chunkFiles.length; i++) {
+          const chunkFilePath = `${chunkPath}/${chunkFiles[i]}`;
+          //输入流
+          const inputStream = fs.createReadStream(chunkFilePath);
+          await new Promise((resolve, reject) => {
+            inputStream.pipe(outputStream, { end: false });
+            inputStream.on('end', resolve);
+            inputStream.on('error', reject);
+          });
+
+          //删除已经合并的文件块
+          await fs.promises.unlink(chunkFilePath);
         }
+
+        //关闭输出流
+        outputStream.end();
         //将文件信息记录
         const file = await this.fileModel.create({
           file_hash: md5,
