@@ -13,7 +13,14 @@ import {
     getMergeChunkApi,
     getUploadChunkApi,
 } from "../api";
-import { useSliceFile, UseSliceFileReturn } from "../slice";
+
+import {
+    //@ts-ignore
+    singleSliceFile,
+    //@ts-ignore
+    useSliceFile,
+    UseSliceFileReturn,
+} from "../slice";
 import {
     asyncApply,
     BigFileError,
@@ -234,17 +241,13 @@ export class UploadTask {
                     this.file,
                     this.chunks,
                 );
-                if (checkAgain.success) {
-                    this.uploadedSize = this.file.size;
-                    return;
-                }
                 if (checkAgain.isCancel || this._canceled) {
                     //取消上传
                     this._canceled = true;
                     throw getError("上传取消", true);
                 } else if (checkAgain.error) {
                     //检查接口错误
-                    throw transformError(check.error);
+                    throw transformError(checkAgain.error);
                 } else if (
                     !checkAgain.success ||
                     checkAgain.chunks!.length !== 0
@@ -290,11 +293,19 @@ export class UploadTask {
     }
 
     private setSliceContext() {
+        //TODO:单线程上传
+        // this.sliceContext = useSliceFile(
+        //     this.file,
+        //     this.options?.worker?.thread ?? 4,
+        //     this.options?.worker?.timeout,
+        //     this.options?.worker?.spark_md5_url,
+        // );
+
         this.sliceContext = useSliceFile(
             this.file,
             this.options?.worker?.thread ?? 4,
             this.options?.worker?.timeout,
-            this.options?.worker?.spark_md5_url,
+            this.options.worker?.spark_md5_url,
         );
     }
 
