@@ -49,7 +49,7 @@ pnpm demo:dev #启动示例
 
 ```
 
-## Browser support
+## 浏览器支持
 
 The `Chrome 80+` browser is recommended for local development
 
