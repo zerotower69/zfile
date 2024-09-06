@@ -170,76 +170,90 @@ export function singleSliceFile(file: UploadFile) {
  */
 export function multipleSliceFile(
     file: UploadFile,
-    maxThread = 6,
-) {
-    let thread = Math.min(getConcurrency(), maxThread);
-    if (file.total <= thread) {
-        thread = 1;
-    }
-    //every thread need to splice total chunks
-    const workerChunkCount = Math.ceil(file.total / thread);
-    let chunkCount = -1;
-    const workFns: (() => Promise<SliceReturn>)[] = [];
-    const terminateFns: ReturnType<
-        typeof sliceFile
-    >["workerTerminate"][] = [];
-    const promises: Promise<SliceReturn>[] = [];
-    for (let i = 0; i < thread; i++) {
-        const { workerFn, workerTerminate } = sliceFile();
-        const start = chunkCount + 1;
-        const end = Math.min(
-            chunkCount + workerChunkCount,
-            file.total - 1,
-        );
-        if (start > end) {
-            break;
-        }
-        const fn = () => {
-            const p = workerFn({
-                fileUid: file.uid,
-                file: file.raw as UploadRawFile,
-                chunkSize: file.chunkSize,
-                start,
-                end,
-            });
-            promises.push(p);
-            p.finally(() => {
-                workerTerminate();
-            });
-            return p;
-        };
-        workFns.push(fn);
-        terminateFns.push(workerTerminate);
-        chunkCount += workerChunkCount;
-    }
-    function start() {
-        while (workFns.length) {
-            const fn = workFns.shift();
-            fn!();
-        }
-        return Promise.all(promises).then((values) => {
-            //strategy: all the hash of chunks sort, then get new hash
+    timeout = 5 * 60 * 1000,
+    url = "https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/spark-md5/3.0.2/spark-md5.min.js",
+    chunkSize = 1024 * 1024,
+): UseSliceFileReturn {
+    const { workerFn, workerTerminate } = useWebWorkerFn(
+        async (data: {
+            file: UploadFile;
+            chunkSize: number;
+        }) => {
+            //在前取1M的切片，在后取1M的切片
+            const { file, chunkSize } = data;
+            const rawFile = file.raw;
             //@ts-ignore
-            const spark = new SparkMD5();
-            const fileChunks: UploadChunk[] = [];
-            for (const batchChunk of values) {
-                for (const chunk of batchChunk.fileChunks) {
-                    fileChunks.push(chunk);
-                    spark.append(chunk.hash as string);
-                }
+            const SparkMD5: SparkMD5 = self.SparkMD5;
+            const spark = new SparkMD5() as typeof SparkMD5;
+            //文件时间戳和文件大小
+            spark.append(
+                rawFile.lastModified.toString() +
+                    file.total.toString(),
+            );
+
+            if (file.total > 1024 * 1024) {
+                const firstChunk = rawFile.slice(
+                    0,
+                    1024 * 1024,
+                );
+                const lastChunk = rawFile.slice(
+                    file.total - 1024 * 1024,
+                    file.total,
+                );
+                const firstContent =
+                    await firstChunk.text();
+                spark.append(firstContent);
+                const lastContent = await lastChunk.text();
+                spark.append(lastContent);
+                spark.append(firstChunk.text());
+            } else {
+                const content = await rawFile
+                    .slice(0, file.total)
+                    .text();
+                spark.append(content);
             }
-            const fileHash = spark.end();
+
+            const fileHash = spark.end() as string;
+            let startPos = 0;
+            const fileChunks: UploadChunk[] = [];
+            let index = 0;
+            while (startPos < file.total) {
+                index++;
+                const chunk = rawFile.slice(
+                    startPos,
+                    Math.min(
+                        rawFile.size,
+                        startPos + chunkSize,
+                    ),
+                );
+                fileChunks.push({
+                    raw: chunk,
+                    filename: rawFile.name,
+                    size: chunk.size,
+                    index: index,
+                    uid: file.uid + index,
+                });
+                startPos += chunkSize;
+            }
+
             return {
-                fileHash,
                 fileChunks,
+                fileHash,
             };
+        },
+        {
+            dependencies: [url],
+            timeout,
+        },
+    );
+    async function start() {
+        return workerFn({
+            file: file,
+            chunkSize: chunkSize,
         });
     }
-    function stop(status?: WebWorkerStatus) {
-        while (terminateFns.length) {
-            const terminateFn = terminateFns.shift()!;
-            terminateFn(status);
-        }
+    function stop() {
+        workerTerminate();
     }
     return {
         start,

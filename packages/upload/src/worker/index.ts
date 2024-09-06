@@ -135,15 +135,17 @@ export function useWebWorkerFn<
 
     const callWorker = (...fnArgs: Parameters<T>) =>
         //@ts-ignore
-        new Promise<ReturnType<T>>((resolve, reject) => {
-            promise = {
-                resolve,
-                reject,
-            };
-            worker && worker.postMessage([[...fnArgs]]);
+        new Promise<Awaited<ReturnType<T>>>(
+            (resolve, reject) => {
+                promise = {
+                    resolve,
+                    reject,
+                };
+                worker && worker.postMessage([[...fnArgs]]);
 
-            setWorkerStatus("RUNNING");
-        });
+                setWorkerStatus("RUNNING");
+            },
+        );
 
     const workerFn = (...fnArgs: Parameters<T>) => {
         if (workerStatus === "RUNNING") {
