@@ -1,6 +1,7 @@
 {
   "name": "@zfile/docs",
   "version": "1.0.0",
+  "private": true,
   "description": "document for zfile",
   "scripts": {
     "docs:dev": "vitepress dev",

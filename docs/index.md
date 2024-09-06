@@ -15,7 +15,7 @@ hero:
       link: /api-examples
 
 features:
-  - title: 无框架依赖🍎
+  - title: 无框架依赖💧
     details: 纯粹的JavaScript逻辑核心实现，不和任何前端框架耦合
   - title: 请求优化😊
     details: 大文件上传和下载请求时限制最大并发数，请求失败时再次重试
