@@ -413,7 +413,8 @@ export interface WorkerConfig {
      */
     parallel?: number;
     /**
-     * the slicing operate should be finished less than timeout.default：5min(unit:ms)
+     * the slicing operate should be finished less than timeout (unit:ms)
+     * @default 5*60*1000(5min)
      */
     timeout?: number;
     /**
@@ -425,11 +426,13 @@ export interface WorkerConfig {
 export interface UploadQueueOptions {
     actions: UploadActions;
     /**
-     * with cookie, default: false
+     * with cookie
+     * @default false
      */
     withCredentials?: boolean;
     /**
-     * the slicing size of every chunk of file, default: 1MB(unit:byte)
+     * the slicing size of every chunk of file (unit:byte)
+     * @default 1024*1024
      */
     chunkSize?: number;
     /**
@@ -439,11 +442,13 @@ export interface UploadQueueOptions {
         | RawAxiosRequestHeaders
         | (() => RawAxiosRequestHeaders);
     /**
-     * global request timeout，default:10s(10*1000ms)
+     * global request timeout (unit: ms)
+     * @default 10*1000
      */
     timeout?: number;
     /**
-     *
+     * the max number of request at the same time
+     * @default 6
      */
     requestLimit?: RequestLimit;
     /**
@@ -451,7 +456,8 @@ export interface UploadQueueOptions {
      */
     parallel?: 1 | 2 | 3;
     /**
-     * the number of try request,default:3
+     * the number of try request
+     * @default 3
      */
     maxRetries?: number;
     /**
@@ -567,4 +573,18 @@ export interface UploadQueueOptions {
         file: UploadFile,
         files: UploadFile[],
     ) => void;
+    /**
+     * will be called when the file already upload
+     * @param file
+     * @param files
+     */
+    onSkipUpload?: (
+        file: UploadFile,
+        files: UploadFile[],
+    ) => void;
+    /**
+     * merge API request will be sent when the file already upload
+     * @default false
+     */
+    stillMergeAfterSkip?: boolean;
 }

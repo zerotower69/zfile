@@ -174,7 +174,7 @@ export class UploadTask {
      * 启动上传
      * @private
      */
-    private startUpload() {
+    private startUpload(stillMerge: boolean) {
         return this.uploadQueue.uploadingQueue.add(
             async () => {
                 this.uploadQueue.requestQueue.updateTaskError(
@@ -208,22 +208,39 @@ export class UploadTask {
                     this._canceled = true;
                     throw transformError(check.error);
                 } else if (check.success) {
-                    //秒传
-                    //TODO:秒传后是否有必要再merge
-                    // this.status = UploadStatus.MERGING;
-                    // //还得调用一次merge
-                    // const merge = await this.mergeChunkApi(
-                    //     this.file,
-                    //     this.chunks,
-                    // );
-                    // if (merge.isCancel || this._canceled) {
-                    //     this._canceled = true;
-                    //     this.status = UploadStatus.CANCEL;
-                    //     throw getError("取消操作", true);
-                    // }
-                    // if (!merge.success) {
-                    //     throw transformError(merge.error);
-                    // }
+                    //skip upload
+                    if (stillMerge) {
+                        this.status = UploadStatus.MERGING;
+                        //还得调用一次merge
+                        const merge =
+                            await this.mergeChunkApi(
+                                this.file,
+                                this.chunks,
+                            );
+                        if (
+                            merge.isCancel ||
+                            this._canceled
+                        ) {
+                            this._canceled = true;
+                            this.status =
+                                UploadStatus.CANCEL;
+                            throw getError(
+                                "取消操作",
+                                true,
+                            );
+                        }
+                        if (!merge.success) {
+                            throw transformError(
+                                merge.error,
+                            );
+                        }
+                    } else {
+                        asyncApply(
+                            this.uploadQueue.options
+                                .onSkipUpload,
+                            [this.file, this.files],
+                        );
+                    }
                     this.uploadedSize = this.file.size;
                     return;
                 }
@@ -366,7 +383,10 @@ export class UploadTask {
                 this.status = UploadStatus.READY;
             }
             try {
-                await this.startUpload();
+                const stillMerge =
+                    this.uploadQueue.options
+                        .stillMergeAfterSkip || false;
+                await this.startUpload(stillMerge);
                 this.status = UploadStatus.SUCCESS;
                 this.isFinished = true;
                 this.file.uploaded = this.file.size;
