@@ -5,16 +5,7 @@
 <script setup lang="ts">
 import { nextTick, ref, toRaw, unref } from 'vue'
 import DragBall from '@/components/UploadList/DragBall.vue'
-import {
-  useFileUpload,
-  getAllPercentage,
-  checkTransformResponse,
-  checkTransformError,
-  uploadTransformResponse,
-  uploadTransformError,
-  mergeTransformResponse,
-  mergeTransformError
-} from '@zfile/upload'
+import { useFileUpload, getAllPercentage } from '@zfile/upload'
 import type { UploadFile } from '@zfile/upload/dist/interface'
 import { modal } from 'vxe-table'
 
@@ -22,11 +13,17 @@ const fileList = ref<UploadFile[]>([])
 const allPercentage = ref(0)
 
 const { upload } = useFileUpload({
-  chunkSize: 1024 * 1024 * 5,
+  chunkSize: 1024 * 100,
   worker: {
     // spark_md5_url: new URL('./lib/spark-md5.min.js', window.location.href).href,
     // thread: 4
   },
+  headers: function () {
+    return {
+      Authorization: 'aaa'
+    }
+  },
+  timeout: 500 * 1000,
   actions: {
     baseURL: import.meta.env.VITE_REQUEST_URL,
     check: {
@@ -42,7 +39,9 @@ const { upload } = useFileUpload({
         if (data.success) {
           return {
             success: true,
-            response
+            response,
+            uploadedChunks: chunks,
+            chunks: []
           }
         }
         const list: { hash: string; index: number }[] =
@@ -94,8 +93,19 @@ const { upload } = useFileUpload({
         formData.append('chunkHash', `${chunk.hash}`)
         return formData
       },
-      transformResponse: uploadTransformResponse,
-      transformError: uploadTransformError
+      transformResponse: (response) => {
+        return {
+          success: true,
+          response
+        }
+      },
+      transformError: (error, isCancel) => {
+        return {
+          success: false,
+          error,
+          isCancel
+        }
+      }
     },
     merge: {
       action: '/merge',
@@ -107,8 +117,19 @@ const { upload } = useFileUpload({
           fileName: file.name
         }
       },
-      transformResponse: mergeTransformResponse,
-      transformError: mergeTransformError
+      transformResponse: (response) => {
+        return {
+          success: true,
+          response
+        }
+      },
+      transformError: (error, isCancel) => {
+        return {
+          success: false,
+          error,
+          isCancel
+        }
+      }
     }
   },
   onFileChange(file, files, type) {
@@ -184,7 +205,7 @@ function removeFile(file: UploadFile) {
 
 function handleUpload(files: File[]) {
   files.forEach((file) => {
-    upload(file)
+    upload(file, {})
   })
 }
 </script>
