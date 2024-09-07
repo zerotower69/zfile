@@ -17,6 +17,7 @@ import {
 import {
     //@ts-ignore
     singleSliceFile,
+    useSingleSliceFile,
     //@ts-ignore
     useSliceFile,
     UseSliceFileReturn,
@@ -265,13 +266,14 @@ export class UploadTask {
                 } else if (checkAgain.error) {
                     //检查接口错误
                     throw transformError(checkAgain.error);
-                } else if (
-                    !checkAgain.success ||
-                    checkAgain.chunks!.length !== 0
-                ) {
-                    //未知错误
-                    throw getError("发生错误");
                 }
+                // else if (
+                //     !checkAgain.success ||
+                //     checkAgain.chunks!.length !== 0
+                // ) {
+                //     //未知错误
+                //     throw getError("发生错误");
+                // }
                 this.status = UploadStatus.MERGING;
                 //开始合并
                 const mergeChunks =
@@ -318,9 +320,8 @@ export class UploadTask {
         //     this.options?.worker?.spark_md5_url,
         // );
 
-        this.sliceContext = useSliceFile(
+        this.sliceContext = useSingleSliceFile(
             this.file,
-            this.options?.worker?.thread ?? 4,
             this.options?.worker?.timeout,
             this.options.worker?.spark_md5_url,
         );

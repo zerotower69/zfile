@@ -1,6 +1,6 @@
 {
   "name": "@zfile/upload",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "private": false,
   "homepage": "https://github.com/zerotower69/zfile",
   "bugs": {
@@ -13,8 +13,9 @@
   },
   "license": "MIT",
   "type": "module",
-  "main": "./src/index.ts",
-  "module": "./src/index.ts",
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],

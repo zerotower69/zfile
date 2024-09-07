@@ -1,6 +1,7 @@
 module.exports={
   extends:["@zfile/eslint-config"],
   rules:{
-    'prefer-spread':"off"
+    'prefer-spread':"off",
+    'no-constant-condition':'off'
   }
 }

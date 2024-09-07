@@ -166,7 +166,9 @@ export function singleSliceFile(file: UploadFile) {
 /**
  * 使用多个线程分片和计算文件hash(分片hash排序策略)
  * @param file
- * @param maxThread 最大线程数
+ * @param timeout
+ * @param url
+ * @param chunkSize
  */
 export function multipleSliceFile(
     file: UploadFile,
@@ -358,6 +360,137 @@ export function useSliceFile(
         clearFns.forEach((fn) => {
             fn.call(null);
         });
+    }
+
+    return {
+        start,
+        stop,
+    };
+}
+
+export function useSingleSliceFile(
+    file: UploadFile,
+    timeout = 5 * 60 * 1000,
+    url = "https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/spark-md5/3.0.2/spark-md5.min.js",
+): UseSliceFileReturn {
+    const { workerFn, workerTerminate } = useWebWorkerFn<
+        (data: {
+            file: UploadRawFile;
+            chunkSize: number;
+        }) => Promise<SliceReturn>
+    >(
+        (data) => {
+            return new Promise((resolve, reject) => {
+                //在worker内定义getChunks函数，不然无法访问
+                function getChunks(
+                    file: UploadRawFile,
+                    chunkSize: number,
+                ) {
+                    let startPos = 0;
+                    const chunks: UploadChunk[] = [];
+                    let index = 1;
+                    while (true) {
+                        const blob = file.slice(
+                            startPos,
+                            Math.min(
+                                startPos + chunkSize,
+                                file.size,
+                            ),
+                        );
+                        chunks.push({
+                            size: blob.size,
+                            raw: blob,
+                            filename: file.name,
+                            uid: file.uid + index,
+                            index,
+                        });
+                        startPos += chunkSize;
+                        index++;
+                        if (startPos >= file.size) {
+                            break;
+                        }
+                    }
+                    return chunks;
+                }
+
+                //@ts-ignore
+                const SparkMD5 = self.SparkMD5;
+                const { file, chunkSize } = data;
+                const spark = new SparkMD5();
+
+                spark.append(file.lastModified + file.size);
+                const reader = new FileReader();
+                reader.onerror = function (e) {
+                    reject(e);
+                };
+                if (file.size < 1024 * 1024 * 2) {
+                    //小于2M
+                    reader.onload = function (e) {
+                        const result = e.target
+                            .result as string;
+                        spark.append(result);
+                        const fileHash =
+                            spark.end() as string;
+                        const fileChunks = getChunks(
+                            file,
+                            chunkSize,
+                        );
+                        resolve({
+                            fileHash,
+                            fileChunks,
+                        });
+                    };
+                    reader.readAsText(file);
+                } else {
+                    let count = 0;
+                    const firstChunk = file.slice(
+                        0,
+                        1024 * 1024,
+                    );
+                    const lastChunk = file.slice(
+                        file.size - 1024 * 1024,
+                        file.size,
+                    );
+                    //大于2M
+                    reader.onload = function (e) {
+                        count++;
+                        const result = e.target
+                            .result as string;
+                        spark.append(result);
+                        if (count === 2) {
+                            const fileHash =
+                                spark.end() as string;
+                            const fileChunks = getChunks(
+                                file,
+                                chunkSize,
+                            );
+                            resolve({
+                                fileHash,
+                                fileChunks,
+                            });
+                        } else if (count === 1) {
+                            reader.readAsText(lastChunk);
+                        }
+                    };
+                    reader.readAsText(firstChunk);
+                }
+            });
+        },
+        {
+            dependencies: [url],
+            timeout,
+        },
+    );
+
+    async function start() {
+        return await workerFn({
+            file: file.raw,
+            chunkSize: file.chunkSize,
+        });
+    }
+
+    function stop() {
+        workerTerminate();
     }
 
     return {
