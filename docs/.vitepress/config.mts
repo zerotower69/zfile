@@ -27,6 +27,14 @@ export default defineConfig({
     footer: {
       message: 'Released under the MIT License.',
       copyright: 'Copyright © 2024-present zerotower'
+    },
+    search:{
+      provider:"algolia",
+      options:{
+        appId:"6I0TTBOMDL",
+        apiKey:"86a464a8d312eab481432046047443ea",
+        indexName:"zerotower69io"
+      }
     }
   },
   outDir:".vitepress/dist",
