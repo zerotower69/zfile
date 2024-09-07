@@ -29,7 +29,7 @@ export default defineConfig({
       copyright: 'Copyright © 2024-present zerotower'
     }
   },
-  outDir:"./dist",
+  outDir:".vitepress/dist",
   vite:{
     server:{
       port:8000
