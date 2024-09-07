@@ -13,19 +13,8 @@ const fileList = ref<UploadFile[]>([])
 const allPercentage = ref(0)
 
 const { upload } = useFileUpload({
-  chunkSize: 1024 * 100,
-  worker: {
-    // spark_md5_url: new URL('./lib/spark-md5.min.js', window.location.href).href,
-    // thread: 4
-  },
-  headers: function () {
-    return {
-      Authorization: 'aaa'
-    }
-  },
-  timeout: 500 * 1000,
   actions: {
-    baseURL: import.meta.env.VITE_REQUEST_URL,
+    baseURL: 'http://localhost:3000/api',
     check: {
       action: '/check',
       method: 'post',
@@ -133,7 +122,6 @@ const { upload } = useFileUpload({
     }
   },
   onFileChange(file, files, type) {
-    console.log(file, files, type)
     if (type === 'add') {
       fileList.value.push(file)
     } else {
