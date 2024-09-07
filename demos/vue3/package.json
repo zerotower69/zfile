@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@vueuse/core": "^10.9.0",
-    "@zfile/upload": "workspace:^1.0.2",
+    "@zfile/upload": "workspace:^1.0.3",
     "vue": "^3.4.21",
     "vxe-table": "^4.6.9",
     "xe-utils": "^3.5.26"

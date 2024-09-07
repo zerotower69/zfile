@@ -182,7 +182,8 @@ const { upload } = useFileUpload({
     modal.message(`[${file.name}]，取消原因:${message}`, {
       status: 'info'
     })
-  }
+  },
+  stillMergeAfterSkip: true
 })
 
 function updateFile(file: UploadFile) {
