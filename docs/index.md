@@ -4,15 +4,15 @@ layout: home
 
 hero:
   name: "zfile"
-  text: "大文件上传和下载"
-  tagline: 无烦恼使用大文件上传和下载
+  text: "大文件上传"
+  tagline: 无烦恼使用大文件上传
   actions:
     - theme: brand
-      text: 演示示例
-      link: /markdown-examples
+      text: 开始使用
+      link: /start-to-use
     - theme: alt
       text: 配置说明
-      link: /api-examples
+      link: /config
 
 features:
   - title: 无框架依赖💧
@@ -22,6 +22,6 @@ features:
   - title: 任务调度🔥
     details: 可以随时暂停、恢复、取消大文件的上传和下载
   - title: 多线程 🚀
-    details: 利用WebWorker优化大文件的hash计算
+    details: 利用WebWorker优化大文件的唯一hash计算
 ---
 
