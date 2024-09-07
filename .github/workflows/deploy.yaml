@@ -43,7 +43,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: '8.6.7'
+          version: '8.10.0'
       # step 4. 安装依赖并打包
       - name: Install dependencies
         run: pnpm install
